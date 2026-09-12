@@ -401,6 +401,7 @@ Use the sidebar on the left to add chapters, sections, and nested sub-pages.
       hasPassword: Boolean(passHash),
       passwordHash: passHash,
       isSystemProtected: false,
+      themeId: 'default',
       gitProvider: 'GENERIC',
       gitRepoUrl: 'local',
       gitBranch: 'main',
@@ -483,6 +484,26 @@ Use the sidebar on the left to add chapters, sections, and nested sub-pages.
       count: getUserSpaces().length,
       userBookCount: getUserSpaces().length,
       maxAllowed: 3,
+    };
+  });
+
+  // Update theme for a documentation book (locked per book)
+  app.patch('/api/spaces/:id/theme', async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const { themeId } = req.body as { themeId?: string };
+    const space = findSpaceBySlugOrId(id, spaces);
+
+    if (!space) {
+      return reply.status(404).send({ error: 'Book not found' });
+    }
+
+    space.themeId = themeId || 'default';
+    saveSpacesManifest();
+
+    return {
+      success: true,
+      space: sanitizeSpace(space),
+      themeId: space.themeId,
     };
   });
 

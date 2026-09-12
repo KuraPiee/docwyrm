@@ -8,7 +8,7 @@ import { PricingSection } from '@/components/PricingSection';
 import { LandingFooter } from '@/components/LandingFooter';
 import { AuthModal } from '@/components/AuthModal';
 import { getSession, clearSession, UserSession } from '@/lib/session';
-import { initTheme } from '@/lib/theme';
+import { resetGlobalTheme } from '@/lib/theme';
 
 export default function LandingPage() {
   const [isDark, setIsDark] = useState(false);
@@ -16,9 +16,9 @@ export default function LandingPage() {
   const [authTab, setAuthTab] = useState<'login' | 'register'>('register');
   const [session, setSession] = useState<UserSession | null>(null);
 
-  // Initialize active theme & read session on mount
+  // Keep landing page in clean default theme & read session
   useEffect(() => {
-    initTheme();
+    resetGlobalTheme();
     const existing = getSession();
     if (existing) {
       setSession(existing);

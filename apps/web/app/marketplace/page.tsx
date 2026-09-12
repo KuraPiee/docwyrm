@@ -30,16 +30,19 @@ import {
   GitBranch,
   Activity,
   Sliders,
+  Book,
+  BookOpen,
 } from 'lucide-react';
 
-import { applyTheme, getActiveTheme, ThemeId, THEMES } from '@/lib/theme';
-import { ThemeSelector } from '@/components/ThemeSelector';
+import { applyTheme, getActiveTheme, ThemeId, THEMES, resetGlobalTheme } from '@/lib/theme';
 import {
   createSpringEasing,
   spatialTreeTransition,
   glassDiffGlow,
   magneticPull,
 } from '../../../../packages/spatial-motion/src/index';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://docwyrm.com';
 
 interface MarketplaceItem {
   id: string;
@@ -97,6 +100,18 @@ export default function MarketplacePage() {
   const [magneticOffset, setMagneticOffset] = useState({ x: 0, y: 0 });
   const magneticButtonRef = useRef<HTMLButtonElement>(null);
 
+  // --- Theme Application to Book Modal State ---
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [selectedThemeToApply, setSelectedThemeToApply] = useState<{
+    id: ThemeId;
+    name: string;
+    colors: { canvas: string; accentFocus: string; textPrimary: string };
+  } | null>(null);
+  const [booksList, setBooksList] = useState<any[]>([]);
+  const [selectedBookId, setSelectedBookId] = useState<string>('');
+  const [isApplyingTheme, setIsApplyingTheme] = useState(false);
+  const [themeSuccessMsg, setThemeSuccessMsg] = useState<string | null>(null);
+
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -105,12 +120,12 @@ export default function MarketplacePage() {
     }
   }, [isDark]);
 
-  // Load active theme and installed extensions on mount
+  // Keep marketplace in clean default theme & fetch available books on mount
   useEffect(() => {
-    try {
-      const current = getActiveTheme();
-      setActiveThemeId(current);
+    resetGlobalTheme();
+    fetchBooksForModal();
 
+    try {
       const saved = localStorage.getItem('docwyrm_installed_extensions');
       if (saved) {
         setInstalledItems(JSON.parse(saved));
@@ -123,17 +138,23 @@ export default function MarketplacePage() {
     } catch (e) {
       console.error(e);
     }
-
-    const handleThemeChange = (e: Event) => {
-      const customEvent = e as CustomEvent<ThemeId>;
-      if (customEvent.detail) {
-        setActiveThemeId(customEvent.detail);
-      }
-    };
-
-    window.addEventListener('docwyrm_theme_changed', handleThemeChange);
-    return () => window.removeEventListener('docwyrm_theme_changed', handleThemeChange);
   }, []);
+
+  const fetchBooksForModal = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/spaces`);
+      if (res.ok) {
+        const data = await res.json();
+        const list = data.spaces || [];
+        setBooksList(list);
+        if (list.length > 0 && !selectedBookId) {
+          setSelectedBookId(list[0].id);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load books for theme modal:', e);
+    }
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -152,17 +173,53 @@ export default function MarketplacePage() {
     showToast(next ? `⭐ Starred "${name}"!` : `Unstarred "${name}".`);
   };
 
-  const handleApplyTheme = (themeKey: ThemeId, name: string) => {
-    applyTheme(themeKey);
-    setActiveThemeId(themeKey);
-    setInstalledItems((prev) => ({ ...prev, [`theme-${themeKey}`]: true }));
-    showToast(`🎨 "${name}" applied to Documentation Studio!`);
+  const handleOpenThemeModal = (item: MarketplaceItem) => {
+    const themeKey = item.id.replace('theme-', '') as ThemeId;
+    const cfg = THEMES[themeKey] || THEMES.default;
+    setSelectedThemeToApply({
+      id: themeKey,
+      name: item.name,
+      colors: cfg.colors,
+    });
+    setThemeSuccessMsg(null);
+    fetchBooksForModal();
+    setIsThemeModalOpen(true);
+  };
+
+  const handleConfirmApplyTheme = async () => {
+    if (!selectedThemeToApply || !selectedBookId) return;
+    setIsApplyingTheme(true);
+    setThemeSuccessMsg(null);
+    try {
+      const res = await fetch(`${API_URL}/api/spaces/${selectedBookId}/theme`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ themeId: selectedThemeToApply.id }),
+      });
+
+      if (res.ok) {
+        const bookObj = booksList.find((b) => b.id === selectedBookId);
+        const bookTitle = bookObj?.title || selectedBookId;
+        const msg = `"${selectedThemeToApply.name}" teması "${bookTitle}" kitabına başarıyla sabitlendi!`;
+        setThemeSuccessMsg(msg);
+        showToast(`🎨 ${msg}`);
+        setBooksList((prev) =>
+          prev.map((b) => (b.id === selectedBookId ? { ...b, themeId: selectedThemeToApply.id } : b))
+        );
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to update book theme');
+      }
+    } catch (e) {
+      alert('Network error while updating book theme');
+    } finally {
+      setIsApplyingTheme(false);
+    }
   };
 
   const handleInstallToggle = (item: MarketplaceItem) => {
     if (item.category === 'themes') {
-      const themeKey = item.id.replace('theme-', '') as ThemeId;
-      handleApplyTheme(themeKey, item.name);
+      handleOpenThemeModal(item);
       return;
     }
 
@@ -469,9 +526,6 @@ export default function MarketplacePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Quick Theme Switcher */}
-          <ThemeSelector />
-
           {/* Direct GitHub Profile */}
           <a
             href="https://github.com/KuraPiee"
@@ -981,32 +1035,17 @@ export default function MarketplacePage() {
                 <div className="pt-4 border-t border-border-light dark:border-border-dark flex items-center gap-2">
                   <button
                     onClick={() => handleInstallToggle(item)}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs ${
-                      isTheme
-                        ? isCurrentTheme
-                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
-                          : 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100'
-                        : isInstalled
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100'
-                    }`}
+                    className="flex-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 cursor-pointer"
                   >
                     {isTheme ? (
-                      isCurrentTheme ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Applied to Studio</span>
-                        </>
-                      ) : (
-                        <>
-                          <Palette className="w-3.5 h-3.5" />
-                          <span>Apply to Studio</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </>
-                      )
+                      <>
+                        <Palette className="w-3.5 h-3.5 text-orange-500" />
+                        <span>Kitapçığa Uygula</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
                     ) : isInstalled ? (
                       <>
-                        <Check className="w-3.5 h-3.5" />
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
                         <span>Enabled in Studio</span>
                       </>
                     ) : (
@@ -1017,17 +1056,6 @@ export default function MarketplacePage() {
                       </>
                     )}
                   </button>
-
-                  {isTheme && isCurrentTheme && (
-                    <Link
-                      href="/docs"
-                      className="py-2 px-3 rounded-lg text-xs font-semibold bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 flex items-center gap-1 transition-colors shadow-xs"
-                      title="Open Documentation Studio"
-                    >
-                      <span>Studio</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  )}
 
                   <a
                     href={item.repoUrl}
@@ -1182,6 +1210,167 @@ export default function MarketplacePage() {
                 className="px-4 py-2 rounded-lg bg-orange-600 text-white text-xs font-semibold hover:bg-orange-700"
               >
                 Submit for Verification
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* THEME APPLICATION MODAL (KITAPÇIĞA TEMA SABİTLEME) */}
+      {isThemeModalOpen && selectedThemeToApply && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-lg rounded-2xl border border-border-light dark:border-border-dark bg-canvas-light dark:bg-canvas-dark p-6 shadow-2xl space-y-5 animate-scaleIn text-xs">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border-light dark:border-border-dark pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-950/60 text-orange-600 flex items-center justify-center">
+                  <Palette className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-textPrimary-light dark:text-textPrimary-dark">
+                    Temayı Dokümantasyon Kitapçığına Uygula
+                  </h3>
+                  <p className="text-[11px] text-textMuted-light dark:text-textMuted-dark">
+                    Seçilen kitapçık bu temada sabitlenecektir
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsThemeModalOpen(false);
+                  setThemeSuccessMsg(null);
+                }}
+                className="p-1 rounded-lg text-textMuted-light dark:text-textMuted-dark hover:text-textPrimary-light dark:hover:text-textPrimary-dark hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Explanatory Banner */}
+            <div className="p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900 text-orange-800 dark:text-orange-300 text-[11px] leading-relaxed">
+              💡 <strong>Sabit Tema İlkesi:</strong> Seçtiğiniz tema yalnızca belirlediğiniz kitapçıkta geçerli olur. Ana site teması asla değişmez ve ziyaretçiler dökümanı okurken temayı kafasına göre değiştiremez.
+            </div>
+
+            {/* Selected Theme Preview */}
+            <div className="p-3.5 rounded-xl border border-border-light dark:border-border-dark bg-subtle-light dark:bg-subtle-dark space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-textPrimary-light dark:text-textPrimary-dark">
+                  Seçilen Tema:
+                </span>
+                <span className="font-mono text-orange-600 dark:text-orange-400 font-bold">
+                  {selectedThemeToApply.name}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-textMuted-light dark:text-textMuted-dark">
+                <span>Renk Paleti Önizleme:</span>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="w-4 h-4 rounded-full border border-black/20 shadow-xs"
+                    style={{ backgroundColor: selectedThemeToApply.colors.canvas }}
+                    title="Arkaplan"
+                  />
+                  <span
+                    className="w-4 h-4 rounded-full border border-black/20 shadow-xs"
+                    style={{ backgroundColor: selectedThemeToApply.colors.accentFocus }}
+                    title="Vurgu Rengi"
+                  />
+                  <span
+                    className="w-4 h-4 rounded-full border border-black/20 shadow-xs"
+                    style={{ backgroundColor: selectedThemeToApply.colors.textPrimary }}
+                    title="Metin Rengi"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Book / Docs Selector */}
+            <div className="space-y-2">
+              <label className="font-semibold block text-textPrimary-light dark:text-textPrimary-dark">
+                Temanın Uygulanacağı Kitapçığı / Dokümanı Seçin:
+              </label>
+
+              {booksList.length === 0 ? (
+                <div className="py-4 text-center text-textMuted-light dark:text-textMuted-dark">
+                  Kitapçıklar yükleniyor...
+                </div>
+              ) : (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  {booksList.map((b) => {
+                    const isSelected = selectedBookId === b.id;
+                    const assignedThemeName = THEMES[b.themeId as ThemeId]?.name || 'Docwyrm Classic (Varsayılan)';
+
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => setSelectedBookId(b.id)}
+                        className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/30 text-textPrimary-light dark:text-textPrimary-dark font-semibold ring-1 ring-orange-500'
+                            : 'border-border-light dark:border-border-dark bg-canvas-light dark:bg-canvas-dark hover:border-neutral-400 dark:hover:border-neutral-600'
+                        }`}
+                      >
+                        <div className="space-y-0.5 min-w-0 pr-2">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <BookOpen className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                            <span className="truncate">{b.title}</span>
+                          </div>
+                          <div className="text-[10px] text-textMuted-light dark:text-textMuted-dark font-mono">
+                            docwyrm.com/{b.slug}
+                          </div>
+                        </div>
+
+                        <div className="text-right flex-shrink-0">
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-textMuted-light dark:text-textMuted-dark">
+                            {assignedThemeName}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Success Message Banner */}
+            {themeSuccessMsg && (
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>{themeSuccessMsg}</span>
+                </div>
+                {selectedBookId && (
+                  <Link
+                    href={`/${booksList.find((b) => b.id === selectedBookId)?.slug || ''}`}
+                    className="underline font-semibold text-emerald-800 dark:text-emerald-200 hover:opacity-80 flex items-center gap-1"
+                  >
+                    <span>Kitaba Git</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-border-light dark:border-border-dark flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsThemeModalOpen(false);
+                  setThemeSuccessMsg(null);
+                }}
+                className="px-4 py-2 rounded-lg border border-border-light dark:border-border-dark hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-semibold cursor-pointer"
+              >
+                Kapat
+              </button>
+              <button
+                type="button"
+                disabled={isApplyingTheme || !selectedBookId}
+                onClick={handleConfirmApplyTheme}
+                className="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white text-xs font-semibold transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Palette className="w-3.5 h-3.5" />
+                <span>{isApplyingTheme ? 'Sabitleniyor...' : 'Kitapçığa Uygula ve Sabitle'}</span>
               </button>
             </div>
           </div>

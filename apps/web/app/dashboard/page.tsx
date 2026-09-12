@@ -22,6 +22,7 @@ import {
 import { getSession, UserSession } from '@/lib/session';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { useI18n } from '@/lib/i18n';
+import { resetGlobalTheme } from '@/lib/theme';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://docwyrm.com';
 
@@ -67,6 +68,7 @@ export default function DashboardPage() {
 
   // Initial mount
   useEffect(() => {
+    resetGlobalTheme();
     const s = getSession();
     if (s) setSession(s);
     fetchSpaces();

@@ -185,8 +185,23 @@ export function getActiveTheme(): ThemeId {
   }
 }
 
+export function resetGlobalTheme() {
+  if (typeof document === 'undefined') return;
+  const html = document.documentElement;
+  html.removeAttribute('data-theme');
+  html.style.removeProperty('--canvas');
+  html.style.removeProperty('--subtle');
+  html.style.removeProperty('--border');
+  html.style.removeProperty('--text-primary');
+  html.style.removeProperty('--text-muted');
+  html.style.removeProperty('--accent-focus');
+  html.style.removeProperty('--code-bg');
+  document.body.style.fontFamily = '';
+}
+
 export function initTheme() {
   if (typeof window === 'undefined') return;
   const active = getActiveTheme();
   applyTheme(active);
 }
+

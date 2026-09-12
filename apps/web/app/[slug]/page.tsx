@@ -26,7 +26,7 @@ import {
   ArrowRight,
   BookOpen
 } from 'lucide-react';
-import { getActiveTheme, ThemeId, applyTheme } from '@/lib/theme';
+import { getActiveTheme, ThemeId, applyTheme, resetGlobalTheme } from '@/lib/theme';
 import { saveSession } from '@/lib/session';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://docwyrm.com';
@@ -39,6 +39,7 @@ interface SpaceItem {
   isPrivate?: boolean;
   hasPassword?: boolean;
   isSystemProtected?: boolean;
+  themeId?: string;
   gitBranch?: string;
 }
 
@@ -97,7 +98,10 @@ export default function DynamicBookPage({ params }: { params: { slug: string } }
       }
     };
     window.addEventListener('docwyrm_theme_changed', handleThemeChange);
-    return () => window.removeEventListener('docwyrm_theme_changed', handleThemeChange);
+    return () => {
+      window.removeEventListener('docwyrm_theme_changed', handleThemeChange);
+      resetGlobalTheme();
+    };
   }, []);
 
   // Keyboard shortcut Ctrl+K
@@ -135,6 +139,11 @@ export default function DynamicBookPage({ params }: { params: { slug: string } }
 
         const data: SpaceItem = await spaceRes.json();
         setSpace(data);
+
+        // Apply book's locked theme (defaults to classic)
+        const bookTheme = (data.themeId as ThemeId) || 'default';
+        applyTheme(bookTheme);
+        setActiveTheme(bookTheme);
 
         // Check if unlocked in session storage
         if (!data.isPrivate || !data.hasPassword) {

@@ -13,16 +13,17 @@ import { SearchModal } from '@/components/SearchModal';
 import { AnalyticsModal } from '@/components/AnalyticsModal';
 import { exportSingleDocAsMarkdown, printCleanDocument, exportFullBook } from '@/lib/export';
 import { Loader2, ArrowLeft, Plus, Book, X, AlertTriangle } from 'lucide-react';
-import { getActiveTheme, ThemeId, applyTheme } from '@/lib/theme';
+import { getActiveTheme, ThemeId, applyTheme, resetGlobalTheme } from '@/lib/theme';
 import { saveSession } from '@/lib/session';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://docwyrm.com';
 const DEFAULT_BOOK_ID = 'docwyrm-developer-guide';
 
 interface SpaceItem {
   id: string;
   title: string;
   slug: string;
+  themeId?: string;
   gitBranch: string;
 }
 
@@ -81,9 +82,8 @@ export default function DocsPage() {
     }
   }, [isDark]);
 
-  // Listen to theme changes in Studio
+  // Listen to theme changes in Studio and cleanup on unmount
   useEffect(() => {
-    setActiveTheme(getActiveTheme());
     const handleThemeChange = (e: Event) => {
       const customEvent = e as CustomEvent<ThemeId>;
       if (customEvent.detail) {
@@ -91,8 +91,21 @@ export default function DocsPage() {
       }
     };
     window.addEventListener('docwyrm_theme_changed', handleThemeChange);
-    return () => window.removeEventListener('docwyrm_theme_changed', handleThemeChange);
+    return () => {
+      window.removeEventListener('docwyrm_theme_changed', handleThemeChange);
+      resetGlobalTheme();
+    };
   }, []);
+
+  // When active space changes, apply its locked theme (defaults to classic)
+  useEffect(() => {
+    if (activeSpaceId && spaces.length > 0) {
+      const current = spaces.find((s) => s.id === activeSpaceId);
+      const bookTheme = (current?.themeId as ThemeId) || 'default';
+      applyTheme(bookTheme);
+      setActiveTheme(bookTheme);
+    }
+  }, [activeSpaceId, spaces]);
 
   // Keyboard shortcut Ctrl+K
   useEffect(() => {

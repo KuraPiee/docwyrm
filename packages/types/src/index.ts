@@ -39,6 +39,7 @@ export interface DocSpace {
   hasPassword?: boolean;
   passwordHash?: string;
   isSystemProtected?: boolean;
+  themeId?: string;
   gitProvider: GitProvider;
   gitRepoUrl: string;
   gitBranch: string;
