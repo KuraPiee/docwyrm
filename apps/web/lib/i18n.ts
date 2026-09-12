@@ -1,3 +1,7 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+
 export type SupportedLocale = 'en' | 'tr' | 'es' | 'de' | 'fr';
 
 export interface LocaleInfo {
@@ -336,8 +340,49 @@ export function setLocale(locale: SupportedLocale) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(LANG_KEY, locale);
+    // Cookie for server/client synchronization
+    document.cookie = `docwyrm_lang=${locale}; path=/; max-age=31536000; SameSite=Lax`;
     window.dispatchEvent(new CustomEvent('docwyrm_lang_changed', { detail: locale }));
   } catch (e) {
     console.error(e);
   }
+}
+
+/**
+ * Reactive i18n hook that guarantees 100% hydration matching (prevents SSR text mismatch)
+ * and dynamically re-renders all subscribing components when language changes.
+ */
+export function useI18n() {
+  const [locale, setLocaleState] = useState<SupportedLocale>('en');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setLocaleState(getActiveLocale());
+    setMounted(true);
+
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent<SupportedLocale>;
+      if (customEvent.detail && TRANSLATIONS[customEvent.detail]) {
+        setLocaleState(customEvent.detail);
+      }
+    };
+
+    window.addEventListener('docwyrm_lang_changed', handleLangChange);
+    return () => window.removeEventListener('docwyrm_lang_changed', handleLangChange);
+  }, []);
+
+  const t = useCallback(
+    (key: string): string => {
+      const active = mounted ? locale : 'en';
+      return TRANSLATIONS[active]?.[key] || TRANSLATIONS.en[key] || key;
+    },
+    [locale, mounted]
+  );
+
+  return {
+    locale: mounted ? locale : 'en',
+    t,
+    mounted,
+    setLocale,
+  };
 }

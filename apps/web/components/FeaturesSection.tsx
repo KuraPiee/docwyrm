@@ -26,7 +26,7 @@ export function FeaturesSection() {
       badge: 'Zero Lock-in',
       description:
         'Every edit in Docwyrm creates an actual signed Git commit through isomorphic-git. Store your entire documentation tree directly in Git without proprietary database lock-in.',
-      codeSnippet: `// Programmatic Git Commit Engine\nawait gitEngine.commitDoc(repoDir, 'index.mdx', content, {\n  name: 'Docwyrm Team',\n  email: 'team@docwyrm.dev'\n}, 'docs: update system architecture');`,
+      codeSnippet: `// Programmatic Git Commit Engine\nawait gitEngine.commitDoc(repoDir, 'index.mdx', content, {\n  name: 'Docwyrm Team',\n  email: 'kurapiee@docwyrm.com'\n}, 'docs: update system architecture');`,
       svgVisual: (
         <svg className="w-full h-24 text-orange-500/80" viewBox="0 0 260 90" fill="none">
           <path d="M20 45H240" stroke="currentColor" strokeWidth="2" strokeDasharray="3 3" opacity="0.4" />

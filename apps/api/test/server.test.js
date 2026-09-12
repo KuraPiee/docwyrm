@@ -49,7 +49,7 @@ test('Docwyrm API Integration Endpoints', async () => {
     payload: {
       blocks: updatedBlocks,
       message: 'docs: update guide with tip block',
-      author: { name: 'Eren Ozdemir', email: 'eren@docwyrm.dev' },
+      author: { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' },
     },
   });
 

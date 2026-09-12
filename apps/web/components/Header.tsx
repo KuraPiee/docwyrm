@@ -25,7 +25,7 @@ import {
   Users,
 } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
-import { getActiveLocale, TRANSLATIONS } from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n';
 
 interface DocBookItem {
   id: string;
@@ -83,8 +83,7 @@ export function Header({
   const branchMenuRef = useRef<HTMLDivElement>(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
-  const loc = getActiveLocale();
-  const t = (k: string) => TRANSLATIONS[loc]?.[k] || TRANSLATIONS.en[k] || k;
+  const { t } = useI18n();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

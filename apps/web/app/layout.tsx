@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     title: 'Docwyrm — Git-Native Documentation Platform',
     description:
       'The modern open-source documentation platform that syncs with Git and stays in sync. Self-host with 1 Docker command.',
-    url: 'https://docwyrm.dev',
+    url: 'https://docwyrm.com',
     siteName: 'Docwyrm',
     locale: 'en_US',
     type: 'website',

@@ -5,28 +5,13 @@ import { Globe, ChevronDown, Check } from 'lucide-react';
 import {
   SUPPORTED_LOCALES,
   SupportedLocale,
-  getActiveLocale,
-  setLocale,
+  useI18n,
 } from '@/lib/i18n';
 
 export function LanguageSelector() {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeLang, setActiveLang] = useState<SupportedLocale>('en');
+  const { locale, setLocale, mounted } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setActiveLang(getActiveLocale());
-
-    const handleLangChange = (e: Event) => {
-      const customEvent = e as CustomEvent<SupportedLocale>;
-      if (customEvent.detail) {
-        setActiveLang(customEvent.detail);
-      }
-    };
-
-    window.addEventListener('docwyrm_lang_changed', handleLangChange);
-    return () => window.removeEventListener('docwyrm_lang_changed', handleLangChange);
-  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -38,7 +23,7 @@ export function LanguageSelector() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const currentLocale = SUPPORTED_LOCALES.find((l) => l.code === activeLang) || SUPPORTED_LOCALES[0];
+  const currentLocale = SUPPORTED_LOCALES.find((l) => l.code === locale) || SUPPORTED_LOCALES[0];
 
   return (
     <div className="relative inline-block" ref={ref}>
@@ -48,7 +33,9 @@ export function LanguageSelector() {
         title="Change Language"
       >
         <span className="text-sm">{currentLocale.flag}</span>
-        <span className="hidden sm:inline font-mono text-[11px] uppercase">{currentLocale.code}</span>
+        <span className="hidden sm:inline font-mono text-[11px] uppercase" suppressHydrationWarning>
+          {currentLocale.code}
+        </span>
         <ChevronDown className="w-3 h-3 text-textMuted-light dark:text-textMuted-dark" />
       </button>
 
@@ -58,13 +45,12 @@ export function LanguageSelector() {
             Language / Dil
           </div>
           {SUPPORTED_LOCALES.map((loc) => {
-            const isSelected = activeLang === loc.code;
+            const isSelected = locale === loc.code;
             return (
               <button
                 key={loc.code}
                 onClick={() => {
                   setLocale(loc.code);
-                  setActiveLang(loc.code);
                   setIsOpen(false);
                 }}
                 className={`w-full flex items-center justify-between px-3 py-1.5 transition-colors ${

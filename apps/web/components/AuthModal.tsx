@@ -54,7 +54,7 @@ export function AuthModal({
     setTimeout(() => {
       handleSuccessfulAuth({
         name: name || (tab === 'login' ? 'Docwyrm Team' : (email ? email.split('@')[0] : 'Docwyrm Team')),
-        email: email || 'eren@docwyrm.dev',
+        email: email || 'kurapiee@docwyrm.com',
         avatarUrl: 'https://github.com/KuraPiee.png',
         provider: 'email',
       });
@@ -68,7 +68,7 @@ export function AuthModal({
     setTimeout(() => {
       handleSuccessfulAuth({
         name: 'Docwyrm Team',
-        email: 'eren@docwyrm.dev',
+        email: 'kurapiee@docwyrm.com',
         avatarUrl: 'https://github.com/KuraPiee.png',
         provider: 'github',
       });
@@ -189,7 +189,7 @@ export function AuthModal({
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Eren Özdemir"
+                        placeholder="KuraPiee"
                         className="w-full pl-9 pr-3 py-2 bg-neutral-50 dark:bg-neutral-900 border border-border-light dark:border-border-dark rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-600 text-xs"
                       />
                     </div>
@@ -224,7 +224,7 @@ export function AuthModal({
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="eren@example.com"
+                    placeholder="kurapiee@docwyrm.com"
                     className="w-full pl-9 pr-3 py-2 bg-neutral-50 dark:bg-neutral-900 border border-border-light dark:border-border-dark rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-600 text-xs"
                   />
                 </div>

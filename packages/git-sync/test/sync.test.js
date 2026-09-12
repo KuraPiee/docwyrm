@@ -32,7 +32,7 @@ test('Git Sync Engine: Commit, Log, and Diff calculation', async () => {
     const commit1 = await git.commit({
       fs,
       dir: tempDir,
-      author: { name: 'Eren', email: 'eren@example.com', timestamp: 1700000000 },
+      author: { name: 'KuraPiee', email: 'kurapiee@docwyrm.com', timestamp: 1700000000 },
       message: 'docs: initial getting started doc'
     });
     assert.strictEqual(typeof commit1, 'string');
@@ -44,7 +44,7 @@ test('Git Sync Engine: Commit, Log, and Diff calculation', async () => {
     const commit2 = await git.commit({
       fs,
       dir: tempDir,
-      author: { name: 'Eren', email: 'eren@example.com', timestamp: 1700000100 },
+      author: { name: 'KuraPiee', email: 'kurapiee@docwyrm.com', timestamp: 1700000100 },
       message: 'docs: add self-host note'
     });
 

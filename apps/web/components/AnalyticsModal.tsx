@@ -17,7 +17,7 @@ import {
   ShieldCheck,
   RefreshCw,
 } from 'lucide-react';
-import { getActiveLocale, TRANSLATIONS } from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n';
 
 interface AnalyticsModalProps {
   isOpen: boolean;
@@ -52,8 +52,7 @@ export function AnalyticsModal({ isOpen, onClose, spaceId, apiUrl }: AnalyticsMo
   const [isLoading, setIsLoading] = useState(true);
   const [copiedCurl, setCopiedCurl] = useState(false);
 
-  const loc = getActiveLocale();
-  const t = (k: string) => TRANSLATIONS[loc]?.[k] || TRANSLATIONS.en[k] || k;
+  const { t } = useI18n();
 
   const fetchStats = async () => {
     setIsLoading(true);

@@ -239,7 +239,7 @@ Use the sidebar on the left to add chapters, sections, and nested sub-pages.
       repoDir,
       '01-getting-started/index.mdx',
       initialMdx,
-      { name: 'Docwyrm Author', email: 'author@docwyrm.dev' },
+      { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' },
       'docs: initialize documentation book'
     );
 
@@ -325,7 +325,7 @@ Overview for this chapter. Add sub-pages using the sidebar.
       repoDir,
       filePath,
       initialMdx,
-      { name: 'Docwyrm Author', email: 'author@docwyrm.dev' },
+      { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' },
       `docs: create section ${sectionName}`
     );
 
@@ -374,7 +374,7 @@ Start writing your technical documentation here.
       repoDir,
       relFilePath,
       initialMdx,
-      { name: 'Docwyrm Author', email: 'author@docwyrm.dev' },
+      { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' },
       `docs: add page ${pageTitle}`
     );
 
@@ -467,7 +467,7 @@ Start writing your technical documentation here.
       return reply.status(400).send({ error: 'Must provide either blocks or rawContent' });
     }
 
-    const author = body.author || { name: 'Eren Ozdemir', email: 'eren@docwyrm.dev' };
+    const author = body.author || { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' };
     const message = body.message || `docs: update ${filePath}`;
 
     const commitSha = await gitEngine.commitDoc(
@@ -507,7 +507,7 @@ Start writing your technical documentation here.
       return reply.status(404).send({ error: 'Document does not exist' });
     }
 
-    const author = { name: 'Eren Ozdemir', email: 'eren@docwyrm.dev' };
+    const author = { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' };
     const commitSha = await gitEngine.deleteDoc(
       repoDir,
       filePath,

@@ -1,4 +1,4 @@
-﻿<p align="center">
+<p align="center">
   <h1 align="center">🐉 Docwyrm</h1>
   <p align="center">
     <strong>The Git-Native, Self-Hostable Modern Documentation Platform</strong><br>
@@ -67,7 +67,7 @@ docwyrm/
 
 ## 📜 License & Legal Notice
 
-Copyright (c) 2026 **Docwyrm Team** ([@KuraPiee](https://github.com/KuraPiee) / Eren Özdemir). All rights reserved.
+Copyright (c) 2026 **Docwyrm Team** ([@KuraPiee](https://github.com/KuraPiee)). All rights reserved.
 
 Licensed under the **Docwyrm Commercial Attribution License v1.0**.
 - **Free for open source and commercial use** provided that attribution to **Docwyrm Team (@KuraPiee)** and link to [docwyrm.com](https://docwyrm.com) is clearly preserved in user-facing platforms.

@@ -19,7 +19,7 @@ import {
   Sparkles,
   ExternalLink,
 } from 'lucide-react';
-import { getActiveLocale, TRANSLATIONS } from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n';
 
 interface DocReaderProps {
   title: string;
@@ -41,8 +41,7 @@ export function DocReader({
   const [userVote, setUserVote] = useState<'yes' | 'no' | null>(null);
   const [voteSubmitted, setVoteSubmitted] = useState(false);
 
-  const loc = getActiveLocale();
-  const t = (k: string) => TRANSLATIONS[loc]?.[k] || TRANSLATIONS.en[k] || k;
+  const { t } = useI18n();
 
   // Word count and reading time
   const totalWords = blocks.reduce((acc, b) => {

@@ -30,7 +30,7 @@ export function saveSession(user: Partial<UserSession>): UserSession {
   const session: UserSession = {
     id: user.id || 'usr_' + Math.random().toString(36).slice(2, 9),
     name: user.name || 'Docwyrm Team',
-    email: user.email || 'eren@docwyrm.dev',
+    email: user.email || 'kurapiee@docwyrm.com',
     avatarUrl: user.avatarUrl || 'https://github.com/KuraPiee.png',
     provider: user.provider || 'github',
     plan: user.plan || 'free_unlimited',

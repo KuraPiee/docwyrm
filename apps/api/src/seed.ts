@@ -4,7 +4,7 @@ import { DocSpace } from '@docwyrm/types';
 import { GitSyncEngine } from '@docwyrm/git-sync';
 
 export function seedDeveloperBooks(storageRoot: string, spaces: Map<string, DocSpace>, gitEngine: GitSyncEngine) {
-  const author = { name: 'Docwyrm Team (@KuraPiee)', email: 'eren@docwyrm.dev' };
+  const author = { name: 'Docwyrm Team (@KuraPiee)', email: 'kurapiee@docwyrm.com' };
 
   // ============================================================================
   // BOOK 1: Docwyrm Developer Guide & SDK
@@ -56,7 +56,7 @@ const commitSha = await gitEngine.commitDoc(
   './spaces/developer-guide',
   '01-getting-started/overview.mdx',
   content,
-  { name: 'Docwyrm Team (@KuraPiee)', email: 'eren@docwyrm.dev' },
+  { name: 'Docwyrm Team (@KuraPiee)', email: 'kurapiee@docwyrm.com' },
   'docs: release architecture guide'
 );
 \`\`\`
@@ -418,7 +418,7 @@ Returns the parsed AST blocks (\`heading\`, \`paragraph\`, \`code\`, \`callout\`
   "message": "docs: update quickstart guide",
   "author": {
     "name": "Docwyrm Team (@KuraPiee)",
-    "email": "eren@docwyrm.dev"
+    "email": "kurapiee@docwyrm.com"
   }
 }
 \`\`\`

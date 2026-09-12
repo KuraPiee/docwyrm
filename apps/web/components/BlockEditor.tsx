@@ -24,7 +24,7 @@ import {
   AlignLeft,
   Sliders,
 } from 'lucide-react';
-import { getActiveLocale, TRANSLATIONS } from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n';
 
 interface BlockEditorProps {
   initialBlocks: EditorBlock[];
@@ -52,8 +52,7 @@ export function BlockEditor({ initialBlocks, filePath, onSave }: BlockEditorProp
   const [slashQuery, setSlashQuery] = useState('');
   const [slashSelectedIdx, setSlashSelectedIdx] = useState(0);
 
-  const loc = getActiveLocale();
-  const t = (k: string) => TRANSLATIONS[loc]?.[k] || TRANSLATIONS.en[k] || k;
+  const { t } = useI18n();
 
   const updateBlock = (id: string, partial: Partial<EditorBlock>) => {
     setBlocks((prev) =>

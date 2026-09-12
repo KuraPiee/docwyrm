@@ -198,7 +198,7 @@ export default function DocsPage() {
       body: JSON.stringify({
         blocks,
         message,
-        author: { name: 'Docwyrm Team (@KuraPiee)', email: 'eren@docwyrm.dev' },
+        author: { name: 'Docwyrm Team (@KuraPiee)', email: 'kurapiee@docwyrm.com' },
       }),
     });
 

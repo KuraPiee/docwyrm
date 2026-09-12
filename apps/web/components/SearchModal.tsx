@@ -20,7 +20,7 @@ import {
   Activity,
   Store,
 } from 'lucide-react';
-import { getActiveLocale, TRANSLATIONS } from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n';
 
 interface KnowledgeItem {
   id: string;
@@ -55,7 +55,7 @@ const KNOWLEDGE_BASE: KnowledgeItem[] = [
     summary: 'Every documentation book is backed directly by a real Git repository with SHA commit histories on disk.',
     detailedAnswer:
       'Unlike cloud-only documentation platforms that store pages in closed relational schemas, Docwyrm uses isomorphic-git directly over local filesystem repos. Every time an author clicks Save, an atomic Git commit is calculated, verified, and signed with SHA-1/SHA-256 hashes.',
-    codeSnippet: `import { GitSyncEngine } from '@docwyrm/git-sync';\n\nconst engine = new GitSyncEngine();\nconst commitSha = await engine.commitDoc(\n  './spaces/developer-guide',\n  '01-getting-started/overview.mdx',\n  rawMdxContent,\n  { name: 'Docwyrm Team (@KuraPiee)', email: 'eren@docwyrm.dev' },\n  'docs: update architectural specification'\n);`,
+    codeSnippet: `import { GitSyncEngine } from '@docwyrm/git-sync';\n\nconst engine = new GitSyncEngine();\nconst commitSha = await engine.commitDoc(\n  './spaces/developer-guide',\n  '01-getting-started/overview.mdx',\n  rawMdxContent,\n  { name: 'Docwyrm Team (@KuraPiee)', email: 'kurapiee@docwyrm.com' },\n  'docs: update architectural specification'\n);`,
     codeLang: 'typescript',
     relatedDocPath: '02-git-storage/git-sync.mdx',
   },
@@ -144,8 +144,7 @@ export function SearchModal({
   const [copiedSnippetId, setCopiedSnippetId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const loc = getActiveLocale();
-  const t = (k: string) => TRANSLATIONS[loc]?.[k] || TRANSLATIONS.en[k] || k;
+  const { t } = useI18n();
 
   useEffect(() => {
     if (isOpen) {
