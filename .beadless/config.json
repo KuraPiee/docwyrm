@@ -1,7 +1,0 @@
-{
-  "version": "0.1.0",
-  "autoCommit": true,
-  "commitPrefix": "chore(beadless): ",
-  "branchAware": true,
-  "maxRecentDecisions": 10
-}
