@@ -1,0 +1,33 @@
+Docwyrm Public License v1.0
+(MIT Permissive with Mandatory Attribution, Trademark Protection & Full Liability Waiver)
+
+Copyright (c) 2026 Docwyrm Team (@KuraPiee) / Eren Özdemir (https://github.com/KuraPiee)
+
+Permission is hereby granted, free of charge, to any person or organization obtaining a copy
+of this software and associated documentation files (the "Software"), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+to whom the Software is furnished to do so, subject to the following conditions:
+
+1. MANDATORY ATTRIBUTION:
+The above copyright notice, this permission notice, and explicit credit attributing the Software
+to "Docwyrm Team (@KuraPiee) / Eren Özdemir (https://github.com/KuraPiee)" must be included in all
+copies or substantial portions of the Software, as well as in public-facing or hosted deployments.
+
+2. TRADEMARK & BRAND PROTECTION:
+The name "Docwyrm" and associated logos are proprietary identifiers of the original authors.
+Neither the name of Docwyrm nor the names of its contributors may be used to endorse, sponsor,
+promote, or sell deceptive, fraudulent, defamatory, or harmful products or services without
+prior specific written permission.
+
+3. DISCLAIMER OF LIABILITY & NO WARRANTY:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
+TITLE, AND NON-INFRINGEMENT.
+
+IN NO EVENT SHALL THE AUTHORS, COPYRIGHT HOLDERS, OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM,
+DAMAGES (WHETHER DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL),
+OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE, ITS COMMERCIAL USE, DOWNSTREAM THIRD-PARTY
+MODIFICATIONS, OR ANY HARMFUL, ILLEGAL, OR UNAUTHORIZED ACTIVITIES CONDUCTED BY THIRD PARTIES
+USING THIS CODEBASE.

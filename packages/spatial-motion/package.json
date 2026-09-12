@@ -1,0 +1,25 @@
+{
+  "name": "@docwyrm/spatial-motion",
+  "version": "0.1.0",
+  "description": "Physics-based spring motion primitives, spatial tree transitions, and glassmorphism diff glow for modern UI engineering",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "license": "MIT",
+  "author": "Docwyrm Team (@KuraPiee) <eren@docwyrm.dev>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KuraPiee/spatial-motion.git"
+  },
+  "keywords": [
+    "motion",
+    "spring-physics",
+    "spatial-ui",
+    "tree-animation",
+    "glassmorphism",
+    "diff-animation",
+    "web-animations"
+  ]
+}

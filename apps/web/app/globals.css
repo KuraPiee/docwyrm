@@ -1,0 +1,236 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --canvas: #FFFFFF;
+  --subtle: #F6F8FA;
+  --border: #E1E4E8;
+  --text-primary: #1F2328;
+  --text-muted: #656D76;
+  --accent-focus: #0969DA;
+  --code-bg: #F6F8FA;
+}
+
+.dark {
+  --canvas: #0D1117;
+  --subtle: #161B22;
+  --border: #21262D;
+  --text-primary: #E6EDF3;
+  --text-muted: #8B949E;
+  --accent-focus: #ea580c;
+  --code-bg: #111620;
+}
+
+/* ==============================================================================
+   STUDIO COMMUNITY THEMES (Scoped to Documentation Studio & Reader)
+   Landing Page (/) remains in pristine, clean default white SaaS mode!
+   ============================================================================== */
+
+/* 1. Tokyo Midnight */
+.studio-scope[data-theme="tokyo-night"] {
+  --canvas: #1a1b26 !important;
+  --subtle: #24283b !important;
+  --border: #3b4261 !important;
+  --text-primary: #c0caf5 !important;
+  --text-muted: #7aa2f7 !important;
+  --accent-focus: #bb9af7 !important;
+  --code-bg: #16161e !important;
+}
+
+/* 2. Nordic Frost */
+.studio-scope[data-theme="nordic-frost"] {
+  --canvas: #2e3440 !important;
+  --subtle: #3b4252 !important;
+  --border: #4c566a !important;
+  --text-primary: #eceff4 !important;
+  --text-muted: #88c0d0 !important;
+  --accent-focus: #81a1c1 !important;
+  --code-bg: #242933 !important;
+}
+
+/* 3. Emerald Obsidian */
+.studio-scope[data-theme="emerald-obsidian"] {
+  --canvas: #09130e !important;
+  --subtle: #0f291e !important;
+  --border: #1b4d38 !important;
+  --text-primary: #ecfdf5 !important;
+  --text-muted: #6ee7b7 !important;
+  --accent-focus: #10b981 !important;
+  --code-bg: #050e08 !important;
+}
+
+/* 4. Retro Terminal (Amber CRT Phosphor) */
+.studio-scope[data-theme="retro-crt"] {
+  --canvas: #0c0a09 !important;
+  --subtle: #1c1917 !important;
+  --border: #78350f !important;
+  --text-primary: #fbbf24 !important;
+  --text-muted: #d97706 !important;
+  --accent-focus: #f59e0b !important;
+  --code-bg: #000000 !important;
+  font-family: 'Geist Mono', 'Courier New', monospace !important;
+}
+
+/* 5. Geist Minimalist */
+.studio-scope[data-theme="geist-minimal"] {
+  --canvas: #000000 !important;
+  --subtle: #111111 !important;
+  --border: #2e2e2e !important;
+  --text-primary: #ffffff !important;
+  --text-muted: #888888 !important;
+  --accent-focus: #ffffff !important;
+  --code-bg: #0a0a0a !important;
+}
+
+/* 6. Sunset Vaporwave */
+.studio-scope[data-theme="cyber-sunset"] {
+  --canvas: #18122B !important;
+  --subtle: #251B37 !important;
+  --border: #443C68 !important;
+  --text-primary: #F7EFE5 !important;
+  --text-muted: #E5B8F4 !important;
+  --accent-focus: #FF6E91 !important;
+  --code-bg: #110D20 !important;
+}
+
+/* Studio Theme Application */
+.studio-scope[data-theme]:not([data-theme="default"]) {
+  background-color: var(--canvas) !important;
+  color: var(--text-primary) !important;
+}
+
+.studio-scope[data-theme]:not([data-theme="default"]) .bg-white,
+.studio-scope[data-theme]:not([data-theme="default"]) .bg-neutral-900,
+.studio-scope[data-theme]:not([data-theme="default"]) .dark\:bg-neutral-900,
+.studio-scope[data-theme]:not([data-theme="default"]) .bg-neutral-950,
+.studio-scope[data-theme]:not([data-theme="default"]) .dark\:bg-neutral-950 {
+  background-color: var(--subtle) !important;
+}
+
+.studio-scope[data-theme]:not([data-theme="default"]) .bg-neutral-50,
+.studio-scope[data-theme]:not([data-theme="default"]) .dark\:bg-neutral-800 {
+  background-color: var(--subtle) !important;
+}
+
+.studio-scope[data-theme]:not([data-theme="default"]) .border-neutral-200,
+.studio-scope[data-theme]:not([data-theme="default"]) .border-neutral-300,
+.studio-scope[data-theme]:not([data-theme="default"]) .border-neutral-700,
+.studio-scope[data-theme]:not([data-theme="default"]) .border-neutral-800,
+.studio-scope[data-theme]:not([data-theme="default"]) .dark\:border-neutral-800 {
+  border-color: var(--border) !important;
+}
+
+.studio-scope[data-theme]:not([data-theme="default"]) .text-neutral-900,
+.studio-scope[data-theme]:not([data-theme="default"]) .text-neutral-800,
+.studio-scope[data-theme]:not([data-theme="default"]) .dark\:text-neutral-100 {
+  color: var(--text-primary) !important;
+}
+
+.studio-scope[data-theme]:not([data-theme="default"]) .text-neutral-600,
+.studio-scope[data-theme]:not([data-theme="default"]) .text-neutral-500,
+.studio-scope[data-theme]:not([data-theme="default"]) .dark\:text-neutral-400 {
+  color: var(--text-muted) !important;
+}
+
+/* Retro CRT Phosphor Glow inside Studio */
+.studio-scope[data-theme="retro-crt"] {
+  background: radial-gradient(circle at 50% 50%, #151008 0%, #0c0a09 100%) !important;
+  text-shadow: 0 0 2px rgba(251, 191, 36, 0.4);
+}
+
+/* 3D Perspective & Parallax Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.perspective-1200 {
+  perspective: 1200px;
+}
+.perspective-1600 {
+  perspective: 1600px;
+}
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Smooth 3D & Parallax Animations */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(1.5deg);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(12px) rotate(-1.5deg);
+  }
+}
+
+@keyframes gridPulse {
+  0%, 100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes beaconWave {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 7s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: floatReverse 8.5s ease-in-out infinite;
+}
+
+.animate-grid-pulse {
+  animation: gridPulse 6s ease-in-out infinite;
+}
+
+.animate-beacon {
+  animation: beaconWave 3s ease-in-out infinite;
+}
+
+body {
+  background-color: var(--canvas);
+  color: var(--text-primary);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reduced Motion Compliance */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

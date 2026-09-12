@@ -1,0 +1,47 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Production Builds
+.next
+dist
+build
+out
+.turbo
+
+# Environment Secrets & Local Config (CRITICAL: Never commit secrets)
+.env
+.env.*
+!.env.example
+*.env
+*.env.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Local Docwyrm Storage & DB
+.docwyrm_storage
+*.sqlite
+*.sqlite3
+*.db
+
+# Logs & Runtime
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
