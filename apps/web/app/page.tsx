@@ -46,8 +46,8 @@ export default function LandingPage() {
 
   const handleSelectPlan = (planName: string) => {
     if (session) {
-      // If already logged in, direct to Studio
-      window.location.href = '/docs';
+      // If already logged in, direct to Projects Dashboard
+      window.location.href = '/dashboard';
       return;
     }
     setAuthTab('register');

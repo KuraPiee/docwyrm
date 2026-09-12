@@ -95,12 +95,12 @@ export function LandingNav({
               {t('pricing')}
             </a>
             <Link
-              href="/docs"
+              href="/dashboard"
               className="hover:text-textPrimary-light dark:hover:text-textPrimary-dark transition-colors flex items-center gap-1"
             >
               <span>{t('docs')}</span>
               <span className="text-[10px] bg-neutral-200 dark:bg-neutral-800 px-1.5 py-0.5 rounded font-mono">
-                /docs
+                Projects
               </span>
             </Link>
           </nav>
@@ -169,7 +169,7 @@ export function LandingNav({
 
                   <div className="py-1">
                     <Link
-                      href="/docs"
+                      href="/dashboard"
                       onClick={() => setProfileDropdownOpen(false)}
                       className="flex items-center justify-between px-3.5 py-2 text-textPrimary-light dark:text-textPrimary-dark hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >

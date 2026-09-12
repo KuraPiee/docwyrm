@@ -34,6 +34,11 @@ export interface DocSpace {
   projectId: string;
   slug: string;
   title: string;
+  description?: string;
+  isPrivate?: boolean;
+  hasPassword?: boolean;
+  passwordHash?: string;
+  isSystemProtected?: boolean;
   gitProvider: GitProvider;
   gitRepoUrl: string;
   gitBranch: string;

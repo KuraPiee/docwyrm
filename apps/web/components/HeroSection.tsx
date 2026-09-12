@@ -169,25 +169,7 @@ export function HeroSection({ onOpenRegister }: HeroSectionProps) {
         </svg>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Top 3D Interactive Badge */}
-        <div
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border border-neutral-200/80 dark:border-neutral-800 text-textPrimary-light dark:text-textPrimary-dark mb-6 shadow-sm hover:shadow-md hover:border-orange-400 dark:hover:border-orange-500 transition-all duration-300 cursor-pointer"
-          style={{
-            transform: `translate3d(${mousePos.x * 12}px, ${mousePos.y * 10}px, 0)`,
-          }}
-        >
-          <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
-          </span>
-          <span className="font-semibold text-orange-600 dark:text-orange-400">Docwyrm v1.0</span>
-          <span className="text-neutral-300 dark:text-neutral-700">•</span>
-          <span className="text-textMuted-light dark:text-textMuted-dark">
-            Git-Native • Offline Technical AI Knowledge • 3D Spatial Docs
-          </span>
-          <ArrowRight className="w-3.5 h-3.5 text-textMuted-light dark:text-textMuted-dark group-hover:translate-x-0.5 transition-transform" />
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8">
 
         {/* Hero Headline with Dynamic Spatial Gradient */}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-textPrimary-light dark:text-textPrimary-dark max-w-4xl mx-auto leading-[1.1]">

@@ -19,6 +19,63 @@ function sanitizeDocPath(baseDir: string, userPath: string): string | null {
   return resolved;
 }
 
+// Password Hashing & Verification Helpers for Private Books
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 32).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, storedHash?: string): boolean {
+  if (!storedHash) return false;
+  try {
+    const [salt, hash] = storedHash.split(':');
+    if (!salt || !hash) return false;
+    const testHash = crypto.scryptSync(password, salt, 32).toString('hex');
+    return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(testHash, 'hex'));
+  } catch {
+    return false;
+  }
+}
+
+// Strip sensitive hashes before returning space to client
+function sanitizeSpace(space: DocSpace) {
+  const { passwordHash, ...rest } = space;
+  return {
+    ...rest,
+    hasPassword: Boolean(passwordHash),
+  };
+}
+
+// Reserved top-level domain paths that cannot be used as book slugs
+const RESERVED_SLUGS = new Set([
+  'api',
+  'docs',
+  'marketplace',
+  'dashboard',
+  'new',
+  'login',
+  'register',
+  'admin',
+  'auth',
+  'settings',
+  '_next',
+  'favicon.ico',
+]);
+
+// Find space by slug or id
+function findSpaceBySlugOrId(identifier: string, spaces: Map<string, DocSpace>): DocSpace | undefined {
+  if (spaces.has(identifier)) {
+    return spaces.get(identifier);
+  }
+  for (const space of spaces.values()) {
+    if (space.slug === identifier || space.id === identifier) {
+      return space;
+    }
+  }
+  return undefined;
+}
+
 // OAuth State Store for CSRF Defense (expires in 10 minutes)
 interface OAuthStateEntry {
   state: string;
@@ -220,14 +277,14 @@ export function buildServer() {
   // List all doc spaces / books (returns count and max allowed)
   app.get('/api/spaces', async () => {
     return {
-      spaces: Array.from(spaces.values()),
+      spaces: Array.from(spaces.values()).map(sanitizeSpace),
       count: spaces.size,
       maxAllowed: 3,
       tier: 'FREE_COMMUNITY',
     };
   });
 
-  // Create new space / book (Enforces Free Tier 3-book limit)
+  // Create new space / book (Enforces Free Tier 3-book limit & supports password protection)
   app.post('/api/spaces', async (req, reply) => {
     if (spaces.size >= 3) {
       return reply.status(403).send({
@@ -237,12 +294,29 @@ export function buildServer() {
       });
     }
 
-    const { title, slug } = req.body as { title?: string; slug?: string };
+    const { title, slug, description, isPrivate, password } = req.body as {
+      title?: string;
+      slug?: string;
+      description?: string;
+      isPrivate?: boolean;
+      password?: string;
+    };
+
     if (!title || !title.trim()) {
       return reply.status(400).send({ error: 'Book title is required' });
     }
 
-    const cleanSlug = (slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-')).replace(/^-|-$/g, '') || `book-${Date.now()}`;
+    let cleanSlug = (slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-')).replace(/^-|-$/g, '') || `book-${Date.now()}`;
+    if (RESERVED_SLUGS.has(cleanSlug.toLowerCase())) {
+      return reply.status(400).send({ error: `Slug "${cleanSlug}" is a reserved system path. Please choose another name.` });
+    }
+
+    for (const s of spaces.values()) {
+      if (s.slug.toLowerCase() === cleanSlug.toLowerCase()) {
+        return reply.status(409).send({ error: `The URL slug "${cleanSlug}" is already in use. Please pick a unique name.` });
+      }
+    }
+
     const spaceId = `space-${cleanSlug}`;
     const repoDir = path.join(storageRoot, spaceId);
 
@@ -257,7 +331,7 @@ category: Getting Started
 
 # Welcome to ${title.trim()}
 
-This is your new documentation book.
+${description ? description.trim() + '\n\n' : ''}This is your new documentation book.
 
 > [!NOTE] Free Tier Book
 > You are using ${spaces.size + 1} of your 3 included books on the Docwyrm Free Tier.
@@ -273,15 +347,23 @@ Use the sidebar on the left to add chapters, sections, and nested sub-pages.
       repoDir,
       '01-getting-started/index.mdx',
       initialMdx,
-      { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' },
+      { name: 'Docwyrm Team (@KuraPiee)', email: 'kurapiee@docwyrm.com' },
       'docs: initialize documentation book'
     );
+
+    const isPriv = Boolean(isPrivate);
+    const passHash = isPriv && password && password.trim() ? hashPassword(password.trim()) : undefined;
 
     const newSpace: DocSpace = {
       id: spaceId,
       projectId: 'proj-1',
       slug: cleanSlug,
       title: title.trim(),
+      description: description?.trim() || undefined,
+      isPrivate: isPriv,
+      hasPassword: Boolean(passHash),
+      passwordHash: passHash,
+      isSystemProtected: false,
       gitProvider: 'GENERIC',
       gitRepoUrl: 'local',
       gitBranch: 'main',
@@ -294,24 +376,58 @@ Use the sidebar on the left to add chapters, sections, and nested sub-pages.
 
     return {
       success: true,
-      space: newSpace,
+      space: sanitizeSpace(newSpace),
       count: spaces.size,
       maxAllowed: 3,
     };
   });
 
-  // Delete documentation book
-  app.delete('/api/spaces/:id', async (req, reply) => {
+  // Verify password for private documentation book
+  app.post('/api/spaces/:id/verify-password', async (req, reply) => {
     const { id } = req.params as { id: string };
-    if (!spaces.has(id)) {
+    const { password } = req.body as { password?: string };
+    const space = findSpaceBySlugOrId(id, spaces);
+
+    if (!space) {
       return reply.status(404).send({ error: 'Book not found' });
     }
-    if (spaces.size <= 1) {
-      return reply.status(400).send({ error: 'Cannot delete the only remaining documentation book in your workspace.' });
+
+    if (!space.isPrivate || !space.passwordHash) {
+      return { success: true, verified: true, token: 'open' };
     }
 
-    spaces.delete(id);
-    const repoDir = path.join(storageRoot, id);
+    if (!password) {
+      return reply.status(400).send({ error: 'Password is required' });
+    }
+
+    const isValid = verifyPassword(password, space.passwordHash);
+    if (!isValid) {
+      return reply.status(401).send({ error: 'Incorrect password' });
+    }
+
+    const token = crypto.randomBytes(24).toString('hex');
+    return {
+      success: true,
+      verified: true,
+      token,
+      spaceId: space.id,
+      slug: space.slug,
+    };
+  });
+
+  // Delete documentation book (protects system books, frees slot for user books)
+  app.delete('/api/spaces/:id', async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const space = findSpaceBySlugOrId(id, spaces);
+    if (!space) {
+      return reply.status(404).send({ error: 'Book not found' });
+    }
+    if (space.isSystemProtected) {
+      return reply.status(403).send({ error: 'Cannot delete the system-protected developer guide.' });
+    }
+
+    spaces.delete(space.id);
+    const repoDir = path.join(storageRoot, space.id);
     try {
       if (fs.existsSync(repoDir)) {
         fs.rmSync(repoDir, { recursive: true, force: true });
@@ -322,7 +438,7 @@ Use the sidebar on the left to add chapters, sections, and nested sub-pages.
 
     return {
       success: true,
-      deletedSpaceId: id,
+      deletedSpaceId: space.id,
       count: spaces.size,
       maxAllowed: 3,
     };
@@ -332,12 +448,12 @@ Use the sidebar on the left to add chapters, sections, and nested sub-pages.
   app.post('/api/spaces/:id/sections', async (req, reply) => {
     const { id } = req.params as { id: string };
     const { sectionName } = req.body as { sectionName?: string };
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
     if (!sectionName) return reply.status(400).send({ error: 'sectionName is required' });
 
     const cleanName = sectionName.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '');
-    const repoDir = path.join(storageRoot, id);
+    const repoDir = path.join(storageRoot, space.id);
     const sectionDir = path.join(repoDir, cleanName);
 
     fs.mkdirSync(sectionDir, { recursive: true });
@@ -359,7 +475,7 @@ Overview for this chapter. Add sub-pages using the sidebar.
       repoDir,
       filePath,
       initialMdx,
-      { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' },
+      { name: 'Docwyrm Team (@KuraPiee)', email: 'kurapiee@docwyrm.com' },
       `docs: create section ${sectionName}`
     );
 
@@ -374,12 +490,12 @@ Overview for this chapter. Add sub-pages using the sidebar.
   app.post('/api/spaces/:id/pages', async (req, reply) => {
     const { id } = req.params as { id: string };
     const { section, pageTitle } = req.body as { section?: string; pageTitle?: string };
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
     if (!pageTitle) return reply.status(400).send({ error: 'pageTitle is required' });
 
     const slug = pageTitle.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '');
-    const repoDir = path.join(storageRoot, id);
+    const repoDir = path.join(storageRoot, space.id);
     const relDir = section ? section.replace(/^[/\\]+|[/\\]+$/g, '') : '';
     const fullDir = path.join(repoDir, relDir);
 
@@ -408,7 +524,7 @@ Start writing your technical documentation here.
       repoDir,
       relFilePath,
       initialMdx,
-      { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' },
+      { name: 'Docwyrm Team (@KuraPiee)', email: 'kurapiee@docwyrm.com' },
       `docs: add page ${pageTitle}`
     );
 
@@ -421,30 +537,30 @@ Start writing your technical documentation here.
 
   app.get('/api/spaces/:id', async (req, reply) => {
     const { id } = req.params as { id: string };
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
-    return space;
+    return sanitizeSpace(space);
   });
 
   // Get doc navigation tree
   app.get('/api/spaces/:id/tree', async (req, reply) => {
     const { id } = req.params as { id: string };
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    const repoDir = path.join(storageRoot, id);
+    const repoDir = path.join(storageRoot, space.id);
     const tree = gitEngine.scanDocTree(repoDir);
-    return { spaceId: id, tree };
+    return { spaceId: space.id, slug: space.slug, tree };
   });
 
   // Read a single doc (Path Traversal Protected)
   app.get('/api/spaces/:id/docs/*', async (req, reply) => {
     const { id } = req.params as { id: string };
     const filePath = (req.params as any)['*'] as string;
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    const repoDir = path.join(storageRoot, id);
+    const repoDir = path.join(storageRoot, space.id);
     const fullPath = sanitizeDocPath(repoDir, filePath);
 
     if (!fullPath) {
@@ -481,41 +597,42 @@ Start writing your technical documentation here.
       author?: { name: string; email: string };
     };
 
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    const repoDir = path.join(storageRoot, id);
+    const repoDir = path.join(storageRoot, space.id);
     const fullPath = sanitizeDocPath(repoDir, filePath);
+    if (!fullPath) return reply.status(400).send({ error: 'Invalid path' });
 
-    if (!fullPath) {
-      return reply.status(400).send({ error: 'Invalid path: path traversal detected' });
-    }
+    let finalMdx = '';
+    let parsedTitle = 'Untitled';
 
-    let mdxToWrite = '';
-
-    if (body.blocks) {
-      mdxToWrite = serializeMdx(body.blocks, body.frontmatter || {});
-    } else if (body.rawContent) {
-      mdxToWrite = body.rawContent;
+    if (body.blocks && Array.isArray(body.blocks)) {
+      const heading = body.blocks.find((b) => b.type === 'heading' && (b as any).level === 1);
+      if (heading) {
+        parsedTitle = (heading as any).content || 'Untitled';
+      }
+      finalMdx = serializeMdx(body.blocks, body.frontmatter || {});
+    } else if (typeof body.rawContent === 'string') {
+      finalMdx = body.rawContent;
+      const parsed = parseMdx(finalMdx);
+      parsedTitle = parsed.title;
     } else {
-      return reply.status(400).send({ error: 'Must provide either blocks or rawContent' });
+      return reply.status(400).send({ error: 'Either blocks or rawContent must be provided' });
     }
 
-    const author = body.author || { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' };
+    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+    fs.writeFileSync(fullPath, finalMdx, 'utf8');
+
+    const author = body.author || { name: 'Docwyrm Team (@KuraPiee)', email: 'kurapiee@docwyrm.com' };
     const message = body.message || `docs: update ${filePath}`;
 
-    const commitSha = await gitEngine.commitDoc(
-      repoDir,
-      filePath,
-      mdxToWrite,
-      author,
-      message
-    );
+    const commitSha = await gitEngine.commitDoc(repoDir, filePath, finalMdx, author, message);
 
     space.lastSyncedCommitSha = commitSha;
     space.lastSyncedAt = new Date();
 
-    const parsed = parseMdx(mdxToWrite);
+    const parsed = parseMdx(finalMdx);
 
     return {
       success: true,
@@ -526,14 +643,18 @@ Start writing your technical documentation here.
     };
   });
 
-  // Delete a doc and commit to Git
+  // Delete a doc and commit to Git (Protects system books from accidental wiping)
   app.delete('/api/spaces/:id/docs/*', async (req, reply) => {
     const { id } = req.params as { id: string };
     const filePath = (req.params as any)['*'] as string;
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    const repoDir = path.join(storageRoot, id);
+    if (space.isSystemProtected) {
+      return reply.status(403).send({ error: 'Core documents in the system developer guide are protected and cannot be deleted.' });
+    }
+
+    const repoDir = path.join(storageRoot, space.id);
     const fullPath = sanitizeDocPath(repoDir, filePath);
     if (!fullPath) return reply.status(400).send({ error: 'Invalid path' });
 
@@ -541,7 +662,7 @@ Start writing your technical documentation here.
       return reply.status(404).send({ error: 'Document does not exist' });
     }
 
-    const author = { name: 'KuraPiee', email: 'kurapiee@docwyrm.com' };
+    const author = { name: 'Docwyrm Team (@KuraPiee)', email: 'kurapiee@docwyrm.com' };
     const commitSha = await gitEngine.deleteDoc(
       repoDir,
       filePath,
@@ -562,10 +683,10 @@ Start writing your technical documentation here.
   // List Git Branches
   app.get('/api/spaces/:id/branches', async (req, reply) => {
     const { id } = req.params as { id: string };
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    const repoDir = path.join(storageRoot, id);
+    const repoDir = path.join(storageRoot, space.id);
     const branches = await gitEngine.listBranches(repoDir);
     return {
       currentBranch: space.gitBranch || 'main',
@@ -579,10 +700,10 @@ Start writing your technical documentation here.
     const { branchName } = req.body as { branchName: string };
     if (!branchName) return reply.status(400).send({ error: 'branchName is required' });
 
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    const repoDir = path.join(storageRoot, id);
+    const repoDir = path.join(storageRoot, space.id);
     await gitEngine.createBranch(repoDir, branchName);
     return { success: true, branch: branchName };
   });
@@ -593,10 +714,10 @@ Start writing your technical documentation here.
     const { branchName } = req.body as { branchName: string };
     if (!branchName) return reply.status(400).send({ error: 'branchName is required' });
 
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    const repoDir = path.join(storageRoot, id);
+    const repoDir = path.join(storageRoot, space.id);
     await gitEngine.checkoutBranch(repoDir, branchName);
     space.gitBranch = branchName;
     return { success: true, activeBranch: branchName };
@@ -605,10 +726,10 @@ Start writing your technical documentation here.
   // Export entire doc space as structured JSON bundle
   app.get('/api/spaces/:id/export', async (req, reply) => {
     const { id } = req.params as { id: string };
-    const space = spaces.get(id);
+    const space = findSpaceBySlugOrId(id, spaces);
     if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    const repoDir = path.join(storageRoot, id);
+    const repoDir = path.join(storageRoot, space.id);
     const files: Array<{ path: string; content: string }> = [];
 
     function collectFiles(dir: string, rel: string = '') {
@@ -632,7 +753,8 @@ Start writing your technical documentation here.
     collectFiles(repoDir);
 
     return {
-      spaceId: id,
+      spaceId: space.id,
+      slug: space.slug,
       title: space.title,
       exportedAt: new Date().toISOString(),
       fileCount: files.length,
@@ -644,10 +766,10 @@ Start writing your technical documentation here.
   app.get('/api/spaces/:id/history/*', async (req, reply) => {
     const { id } = req.params as { id: string };
     const filePath = (req.params as any)['*'] as string;
-    const repoDir = path.join(storageRoot, id);
+    const space = findSpaceBySlugOrId(id, spaces);
+    if (!space) return reply.status(404).send({ error: 'Space not found' });
 
-    if (!fs.existsSync(repoDir)) return reply.status(404).send({ error: 'Space not found' });
-
+    const repoDir = path.join(storageRoot, space.id);
     const safe = sanitizeDocPath(repoDir, filePath);
     if (!safe) return reply.status(400).send({ error: 'Invalid path' });
 
@@ -660,7 +782,10 @@ Start writing your technical documentation here.
     const { id } = req.params as { id: string };
     const filePath = (req.params as any)['*'] as string;
     const { from, to } = req.query as { from: string; to: string };
-    const repoDir = path.join(storageRoot, id);
+    const space = findSpaceBySlugOrId(id, spaces);
+    if (!space) return reply.status(404).send({ error: 'Space not found' });
+
+    const repoDir = path.join(storageRoot, space.id);
 
     if (!from || !to) {
       return reply.status(400).send({ error: 'from and to commit SHAs required' });
@@ -679,7 +804,10 @@ Start writing your technical documentation here.
     const { q } = req.query as { q?: string };
     if (!q || !q.trim()) return { results: [] };
 
-    const repoDir = path.join(storageRoot, id);
+    const space = findSpaceBySlugOrId(id, spaces);
+    if (!space) return reply.status(404).send({ error: 'Space not found' });
+
+    const repoDir = path.join(storageRoot, space.id);
     const query = q.toLowerCase();
     const results: SearchResult[] = [];
 

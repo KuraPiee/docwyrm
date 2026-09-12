@@ -50,7 +50,7 @@ export default function DocsPage() {
   const [newBookError, setNewBookError] = useState<string | null>(null);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 
-  // Capture GitHub OAuth success redirect
+  // Capture GitHub OAuth success redirect & route to Dashboard
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
@@ -65,10 +65,11 @@ export default function DocsPage() {
         provider: 'github',
         plan: 'free_unlimited',
       });
-      // Clean query parameters from URL without reloading
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
+      window.location.href = '/dashboard';
+      return;
     }
+    // Direct any visitor to the Projects Dashboard first
+    window.location.href = '/dashboard';
   }, []);
 
   // Sync dark class on <html>
