@@ -107,10 +107,18 @@ export default function DashboardPage() {
     );
   };
 
+  // Split into Official Guides (@KuraPiee, kotadan muaf) and User Custom Projects
+  const officialSpaces = spaces.filter((s) => s.isSystemProtected);
+  const customSpaces = spaces.filter((s) => !s.isSystemProtected);
+
+  const userBookCount = customSpaces.length;
+  const maxAllowed = 3;
+  const isLimitReached = userBookCount >= maxAllowed;
+
   const handleCreateSpace = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (spaces.length >= 3) {
-      setCreateError('Free Tier limit reached. You can create up to 3 documentation books.');
+    if (userBookCount >= maxAllowed) {
+      setCreateError('Free Tier limit reached. You can create up to 3 custom documentation books.');
       return;
     }
     if (!title.trim()) {
@@ -209,15 +217,17 @@ export default function DashboardPage() {
     }
   };
 
-  const filteredSpaces = spaces.filter(
+  const filteredOfficial = officialSpaces.filter(
     (s) =>
       s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const activeCount = spaces.length;
-  const maxAllowed = 3;
-  const isLimitReached = activeCount >= maxAllowed;
+  const filteredCustom = customSpaces.filter(
+    (s) =>
+      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-canvas-light dark:bg-canvas-dark text-textPrimary-light dark:text-textPrimary-dark selection:bg-orange-500/20 transition-colors">
@@ -243,41 +253,32 @@ export default function DashboardPage() {
           <LanguageSelector />
           <button
             onClick={toggleTheme}
-            className="p-2 text-textMuted-light dark:text-textMuted-dark hover:text-textPrimary-light dark:hover:text-textPrimary-dark rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            className="p-2 text-textMuted-light dark:text-textMuted-dark hover:text-textPrimary-light dark:hover:text-textPrimary-dark rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
             title="Toggle theme"
           >
             {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          {session ? (
-            <div className="flex items-center space-x-2 pl-2 border-l border-border-light dark:border-border-dark">
-              <img
-                src={session.avatarUrl || 'https://github.com/KuraPiee.png'}
-                alt={session.name}
-                className="w-7 h-7 rounded-full border border-orange-500/60 object-cover"
-              />
-              <div className="hidden sm:block text-left text-xs leading-tight">
-                <div className="font-semibold truncate max-w-[120px]">{session.name}</div>
-                <div className="text-[10px] text-textMuted-light dark:text-textMuted-dark font-mono">
-                  @KuraPiee
-                </div>
+          <div className="flex items-center space-x-2 pl-2 border-l border-border-light dark:border-border-dark">
+            <img
+              src={session?.avatarUrl || 'https://github.com/KuraPiee.png'}
+              alt={session?.name || 'KuraPiee'}
+              className="w-7 h-7 rounded-full border border-orange-500/60 object-cover"
+            />
+            <div className="hidden sm:block text-left text-xs leading-tight">
+              <div className="font-semibold truncate max-w-[120px]">{session?.name || 'Docwyrm Team'}</div>
+              <div className="text-[10px] text-textMuted-light dark:text-textMuted-dark font-mono">
+                @KuraPiee
               </div>
             </div>
-          ) : (
-            <Link
-              href="/"
-              className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border-light dark:border-border-dark hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-            >
-              Back to Home
-            </Link>
-          )}
+          </div>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-8 py-8 space-y-8">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-8 py-8 space-y-10">
         {/* Welcome & Quota Card */}
-        <div className="rounded-2xl border border-border-light dark:border-border-dark bg-subtle-light/40 dark:bg-subtle-dark/40 p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="rounded-2xl border border-border-light dark:border-border-dark bg-subtle-light/40 dark:bg-subtle-dark/40 p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden shadow-xs">
           <div className="space-y-2 max-w-xl z-10">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
@@ -287,19 +288,19 @@ export default function DashboardPage() {
               Documentation Projects & Books
             </h1>
             <p className="text-xs sm:text-sm text-textMuted-light dark:text-textMuted-dark leading-relaxed">
-              Her dökümantasyon kitabı doğrudan kendi domain linkine (<span className="font-mono text-orange-600 dark:text-orange-400">docwyrm.com/projeadı</span>) bağlanır. İsteğe göre özel ve şifreli olarak korunabilir.
+              Her dökümantasyon kitabı doğrudan kendi domain linkine (<span className="font-mono text-orange-600 dark:text-orange-400 font-semibold">docwyrm.com/projeadı</span>) bağlanır. Resmi rehberler geliştiricilerin öğrenmesi için herkese açıktır ve kotanızdan harcamaz.
             </p>
           </div>
 
           {/* Meter & Action */}
           <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 z-10">
-            <div className="bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark rounded-xl p-3.5 w-full sm:w-60 shadow-xs space-y-2">
+            <div className="bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark rounded-xl p-3.5 w-full sm:w-64 shadow-xs space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-textMuted-light dark:text-textMuted-dark">
-                  Book Quota
+                  Kişisel Kitap Kotası
                 </span>
                 <span className="font-bold font-mono text-orange-600 dark:text-orange-400">
-                  {activeCount} / {maxAllowed} Books
+                  {userBookCount} / {maxAllowed} Books
                 </span>
               </div>
               <div className="w-full h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
@@ -307,20 +308,22 @@ export default function DashboardPage() {
                   className={`h-full transition-all duration-500 rounded-full ${
                     isLimitReached ? 'bg-amber-500' : 'bg-orange-600'
                   }`}
-                  style={{ width: `${(activeCount / maxAllowed) * 100}%` }}
+                  style={{ width: `${(userBookCount / maxAllowed) * 100}%` }}
                 />
               </div>
-              <div className="text-[10px] text-textMuted-light dark:text-textMuted-dark">
-                {isLimitReached
-                  ? 'Limit reached. Delete an existing book to create a new one.'
-                  : `${maxAllowed - activeCount} book slot${maxAllowed - activeCount > 1 ? 's' : ''} available on Free Tier.`}
+              <div className="text-[10px] text-textMuted-light dark:text-textMuted-dark leading-snug">
+                {userBookCount === 0
+                  ? '3 / 3 kitap kotanız boşta. (Resmi rehberler kotadan muaftır).'
+                  : isLimitReached
+                  ? 'Limit doldu. Yeni proje oluşturmak için birini silebilirsiniz.'
+                  : `${maxAllowed - userBookCount} adet kişisel kitap hakkınız kullanılabilir.`}
               </div>
             </div>
 
             <button
               onClick={() => {
                 if (isLimitReached) {
-                  alert('Free Tier limit reached. You can have up to 3 documentation books active.');
+                  alert('Free Tier limitine ulaşıldı. En fazla 3 özel dökümantasyon kitabı oluşturabilirsiniz.');
                   return;
                 }
                 setCreateError(null);
@@ -334,7 +337,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Filter & Search */}
+        {/* Filter & Search Bar */}
         <div className="flex items-center justify-between gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-textMuted-light dark:text-textMuted-dark" />
@@ -342,127 +345,275 @@ export default function DashboardPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Proje veya kitap ara..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-border-light dark:border-border-dark bg-canvas-light dark:bg-canvas-dark text-textPrimary-light dark:text-textPrimary-dark focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+              placeholder="Proje, rehber veya slug ara..."
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-border-light dark:border-border-dark bg-canvas-light dark:bg-canvas-dark text-textPrimary-light dark:text-textPrimary-dark focus:ring-2 focus:ring-orange-500 focus:outline-hidden shadow-xs"
             />
           </div>
         </div>
 
-        {/* Projects Grid */}
-        {isLoading ? (
-          <div className="py-20 text-center text-xs text-textMuted-light dark:text-textMuted-dark">
-            Projeler yükleniyor...
+        {/* ========================================================================= */}
+        {/* SECTION 1: OFFICIAL DEVELOPER GUIDES & SDK (HERKESE AÇIK & KOTADAN YEMEZ) */}
+        {/* ========================================================================= */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-light dark:border-border-dark pb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold tracking-tight text-textPrimary-light dark:text-textPrimary-dark">
+                  Resmi Dökümantasyon Projeleri & Geliştirici SDK
+                </h2>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
+                  Kotadan Yemez (0 Quota)
+                </span>
+              </div>
+              <p className="text-xs text-textMuted-light dark:text-textMuted-dark mt-0.5">
+                Docwyrm hesabı (<span className="font-semibold text-orange-600 dark:text-orange-400">@KuraPiee</span>) altında herkese açık yayınlanır. Geliştiricilerin tema, eklenti ve API entegrasyonu geliştirmeyi öğrenmesi için sunulmuştur.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-textMuted-light dark:text-textMuted-dark">
+              <span className="font-semibold text-textPrimary-light dark:text-textPrimary-dark">{officialSpaces.length}</span>
+              <span>Resmi Kitap</span>
+            </div>
           </div>
-        ) : filteredSpaces.length === 0 ? (
-          <div className="py-16 text-center border border-dashed border-border-light dark:border-border-dark rounded-2xl p-8 space-y-3">
-            <BookOpen className="w-8 h-8 mx-auto text-textMuted-light dark:text-textMuted-dark opacity-40" />
-            <div className="font-semibold text-sm">Henüz bir proje bulunamadı</div>
-            <p className="text-xs text-textMuted-light dark:text-textMuted-dark max-w-sm mx-auto">
-              Yeni bir dökümantasyon kitabı oluşturarak başlayabilir ve dökümanlarınızı Git ile senkronize edebilirsiniz.
-            </p>
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-semibold"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Proje Oluştur</span>
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredSpaces.map((space) => {
-              const relativeUrl = `/${space.slug}`;
 
-              return (
-                <div
-                  key={space.id}
-                  className="rounded-2xl border border-border-light dark:border-border-dark bg-canvas-light dark:bg-canvas-dark hover:border-orange-500/50 dark:hover:border-orange-500/50 transition-all p-5 flex flex-col justify-between shadow-xs hover:shadow-md group"
-                >
-                  <div className="space-y-3">
-                    {/* Header: Title & Badges */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1 min-w-0">
-                        <h3 className="font-bold text-sm truncate text-textPrimary-light dark:text-textPrimary-dark group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
-                          {space.title}
-                        </h3>
-                        {space.description && (
-                          <p className="text-xs text-textMuted-light dark:text-textMuted-dark line-clamp-2 leading-relaxed">
-                            {space.description}
-                          </p>
-                        )}
-                      </div>
+          {isLoading ? (
+            <div className="py-10 text-center text-xs text-textMuted-light dark:text-textMuted-dark">
+              Resmi rehberler yükleniyor...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredOfficial.map((space) => {
+                const relativeUrl = `/${space.slug}`;
 
-                      {/* Status badge */}
-                      {space.isPrivate ? (
-                        <span
-                          className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900 flex-shrink-0"
-                          title="Şifreli & Özel Kitap"
-                        >
-                          <Lock className="w-2.5 h-2.5" />
-                          <span>Private</span>
-                        </span>
-                      ) : (
+                return (
+                  <div
+                    key={space.id}
+                    className="rounded-2xl border border-orange-500/30 bg-canvas-light dark:bg-canvas-dark hover:border-orange-500 transition-all p-5 flex flex-col justify-between shadow-xs hover:shadow-md group relative overflow-hidden"
+                  >
+                    {/* Top Glow Ribbon */}
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 to-amber-500 opacity-60" />
+
+                    <div className="space-y-3">
+                      {/* Header: Title & Official Badges */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1 min-w-0">
+                          <h3 className="font-bold text-sm truncate text-textPrimary-light dark:text-textPrimary-dark group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                            {space.title}
+                          </h3>
+                          {space.description && (
+                            <p className="text-xs text-textMuted-light dark:text-textMuted-dark line-clamp-2 leading-relaxed">
+                              {space.description}
+                            </p>
+                          )}
+                        </div>
+
                         <span
                           className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900 flex-shrink-0"
-                          title="Herkese Açık Kitap"
+                          title="Herkese Açık Resmi Rehber"
                         >
                           <Globe className="w-2.5 h-2.5" />
                           <span>Public</span>
                         </span>
-                      )}
-                    </div>
-
-                    {/* Slug & Domain Link */}
-                    <div className="rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-border-light dark:border-border-dark px-2.5 py-1.5 flex items-center justify-between text-[11px] font-mono">
-                      <span className="truncate text-orange-600 dark:text-orange-400">
-                        docwyrm.com/{space.slug}
-                      </span>
-                      <button
-                        onClick={() => handleCopyLink(space.slug)}
-                        className="text-textMuted-light dark:text-textMuted-dark hover:text-textPrimary-light dark:hover:text-textPrimary-dark p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors flex-shrink-0 ml-1 cursor-pointer"
-                        title="Copy Domain URL"
-                      >
-                        {copiedSlug === space.slug ? (
-                          <Check className="w-3 h-3 text-emerald-500" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                      </button>
-                    </div>
-
-                    {space.isSystemProtected && (
-                      <div className="text-[10px] font-medium text-textMuted-light dark:text-textMuted-dark flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-orange-500" />
-                        <span>Core Official Developer Guide</span>
                       </div>
-                    )}
+
+                      {/* Domain Link */}
+                      <div className="rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-border-light dark:border-border-dark px-2.5 py-1.5 flex items-center justify-between text-[11px] font-mono">
+                        <span className="truncate text-orange-600 dark:text-orange-400 font-semibold">
+                          docwyrm.com/{space.slug}
+                        </span>
+                        <button
+                          onClick={() => handleCopyLink(space.slug)}
+                          className="text-textMuted-light dark:text-textMuted-dark hover:text-textPrimary-light dark:hover:text-textPrimary-dark p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors flex-shrink-0 ml-1 cursor-pointer"
+                          title="Domain Linkini Kopyala"
+                        >
+                          {copiedSlug === space.slug ? (
+                            <Check className="w-3 h-3 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Official Tag */}
+                      <div className="flex items-center justify-between text-[10px] text-textMuted-light dark:text-textMuted-dark pt-1">
+                        <span className="inline-flex items-center gap-1 font-medium text-orange-600 dark:text-orange-400">
+                          <Sparkles className="w-3 h-3" />
+                          <span>Docwyrm Official Guide</span>
+                        </span>
+                        <span className="font-mono text-neutral-400">@KuraPiee</span>
+                      </div>
+                    </div>
+
+                    {/* Actions Footer */}
+                    <div className="pt-4 mt-4 border-t border-border-light dark:border-border-dark flex items-center justify-between gap-2">
+                      <Link
+                        href={relativeUrl}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-neutral-100 hover:bg-orange-600 dark:bg-neutral-800 dark:hover:bg-orange-600 text-textPrimary-light dark:text-textPrimary-dark hover:text-white dark:hover:text-white text-xs font-semibold transition-colors"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>Rehberi Oku & İncele</span>
+                      </Link>
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-                  {/* Actions Footer */}
-                  <div className="pt-4 mt-4 border-t border-border-light dark:border-border-dark flex items-center justify-between gap-2">
-                    <Link
-                      href={relativeUrl}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-orange-600 dark:bg-neutral-800 dark:hover:bg-orange-600 text-textPrimary-light dark:text-textPrimary-dark hover:text-white dark:hover:text-white text-xs font-semibold transition-colors"
-                    >
-                      <BookOpen className="w-3.5 h-3.5" />
-                      <span>Kitabı Aç & Oku</span>
-                    </Link>
+        {/* ========================================================================= */}
+        {/* SECTION 2: YOUR CUSTOM PROJECTS (KİŞİSEL PROJELERİN - 3 KİTAP KOTASI)   */}
+        {/* ========================================================================= */}
+        <div className="space-y-4 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-light dark:border-border-dark pb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold tracking-tight text-textPrimary-light dark:text-textPrimary-dark">
+                  Kişisel Dökümantasyon Projelerin
+                </h2>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-900">
+                  {userBookCount} / {maxAllowed} Aktif Kitap
+                </span>
+              </div>
+              <p className="text-xs text-textMuted-light dark:text-textMuted-dark mt-0.5">
+                Kendi yazılım veya dökümantasyon projelerin için oluşturduğun siteler. İsteğe bağlı olarak şifreli (Private) koruyabilirsin.
+              </p>
+            </div>
 
-                    {!space.isSystemProtected && (
+            <button
+              onClick={() => {
+                if (isLimitReached) {
+                  alert('Free Tier limitine ulaşıldı. En fazla 3 özel dökümantasyon kitabı oluşturabilirsiniz.');
+                  return;
+                }
+                setCreateError(null);
+                setIsCreateOpen(true);
+              }}
+              disabled={isLimitReached}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white text-xs font-semibold transition-colors shadow-xs cursor-pointer self-start sm:self-auto"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Yeni Proje Oluştur</span>
+            </button>
+          </div>
+
+          {isLoading ? (
+            <div className="py-10 text-center text-xs text-textMuted-light dark:text-textMuted-dark">
+              Kişisel projeler yükleniyor...
+            </div>
+          ) : filteredCustom.length === 0 ? (
+            <div className="py-14 text-center border border-dashed border-border-light dark:border-border-dark rounded-2xl p-8 space-y-3 bg-subtle-light/20 dark:bg-subtle-dark/20">
+              <div className="w-12 h-12 rounded-2xl bg-orange-100 dark:bg-orange-950/60 text-orange-600 flex items-center justify-center mx-auto">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="font-bold text-sm">Henüz Kişisel Proje Oluşturmadınız</div>
+              <p className="text-xs text-textMuted-light dark:text-textMuted-dark max-w-md mx-auto leading-relaxed">
+                Free Tier ile 3 adet bağımsız dökümantasyon kitabı hakkınız bulunmaktadır. 'Yeni Proje Oluştur' butonuna tıklayarak ilk sitenizi (<span className="font-mono text-orange-600 dark:text-orange-400">docwyrm.com/projeadı</span>) anında oluşturabilirsiniz.
+              </p>
+              <button
+                onClick={() => {
+                  setCreateError(null);
+                  setIsCreateOpen(true);
+                }}
+                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>İlk Projeni Oluştur (3 Hak Boşta)</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredCustom.map((space) => {
+                const relativeUrl = `/${space.slug}`;
+
+                return (
+                  <div
+                    key={space.id}
+                    className="rounded-2xl border border-border-light dark:border-border-dark bg-canvas-light dark:bg-canvas-dark hover:border-orange-500/50 dark:hover:border-orange-500/50 transition-all p-5 flex flex-col justify-between shadow-xs hover:shadow-md group"
+                  >
+                    <div className="space-y-3">
+                      {/* Header: Title & Privacy Badge */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1 min-w-0">
+                          <h3 className="font-bold text-sm truncate text-textPrimary-light dark:text-textPrimary-dark group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                            {space.title}
+                          </h3>
+                          {space.description && (
+                            <p className="text-xs text-textMuted-light dark:text-textMuted-dark line-clamp-2 leading-relaxed">
+                              {space.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Status badge */}
+                        {space.isPrivate ? (
+                          <span
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900 flex-shrink-0"
+                            title="Şifreli & Özel Kitap"
+                          >
+                            <Lock className="w-2.5 h-2.5" />
+                            <span>Private</span>
+                          </span>
+                        ) : (
+                          <span
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900 flex-shrink-0"
+                            title="Herkese Açık Kitap"
+                          >
+                            <Globe className="w-2.5 h-2.5" />
+                            <span>Public</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Slug & Domain Link */}
+                      <div className="rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-border-light dark:border-border-dark px-2.5 py-1.5 flex items-center justify-between text-[11px] font-mono">
+                        <span className="truncate text-orange-600 dark:text-orange-400 font-semibold">
+                          docwyrm.com/{space.slug}
+                        </span>
+                        <button
+                          onClick={() => handleCopyLink(space.slug)}
+                          className="text-textMuted-light dark:text-textMuted-dark hover:text-textPrimary-light dark:hover:text-textPrimary-dark p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors flex-shrink-0 ml-1 cursor-pointer"
+                          title="Domain Linkini Kopyala"
+                        >
+                          {copiedSlug === space.slug ? (
+                            <Check className="w-3 h-3 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="text-[10px] text-textMuted-light dark:text-textMuted-dark flex items-center justify-between pt-1">
+                        <span className="font-mono">Git-Native Repo</span>
+                        {space.isPrivate && (
+                          <span className="text-amber-600 dark:text-amber-400 font-medium">Şifre Korumalı</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions Footer */}
+                    <div className="pt-4 mt-4 border-t border-border-light dark:border-border-dark flex items-center justify-between gap-2">
+                      <Link
+                        href={relativeUrl}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-neutral-100 hover:bg-orange-600 dark:bg-neutral-800 dark:hover:bg-orange-600 text-textPrimary-light dark:text-textPrimary-dark hover:text-white dark:hover:text-white text-xs font-semibold transition-colors"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>Kitabı Aç & Düzenle</span>
+                      </Link>
+
                       <button
                         onClick={() => setDeleteTarget(space)}
-                        className="p-1.5 rounded-lg text-textMuted-light dark:text-textMuted-dark hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                        className="p-2 rounded-lg text-textMuted-light dark:text-textMuted-dark hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
                         title="Projeyi Sil"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
       </main>
 
       {/* CREATE NEW PROJECT MODAL */}
@@ -475,9 +626,9 @@ export default function DashboardPage() {
                   <Book className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm">Yeni Dökümantasyon Projesi</h3>
+                  <h3 className="font-bold text-sm">Yeni Kişisel Proje Oluştur</h3>
                   <p className="text-[11px] text-textMuted-light dark:text-textMuted-dark">
-                    Free Tier: {activeCount}/3 aktif kitap
+                    Free Tier: {userBookCount}/3 aktif kitap kullanılıyor
                   </p>
                 </div>
               </div>

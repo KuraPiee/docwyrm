@@ -107,9 +107,41 @@ export function buildServer() {
   }
 
   const spaces = new Map<string, DocSpace>();
+  const manifestPath = path.join(storageRoot, 'spaces_manifest.json');
+
+  const saveSpacesManifest = () => {
+    try {
+      const list = Array.from(spaces.values());
+      fs.writeFileSync(manifestPath, JSON.stringify(list, null, 2), 'utf8');
+    } catch (e) {
+      console.error('Failed to save spaces manifest:', e);
+    }
+  };
+
+  const loadSpacesManifest = () => {
+    try {
+      if (fs.existsSync(manifestPath)) {
+        const raw = fs.readFileSync(manifestPath, 'utf8');
+        const list: DocSpace[] = JSON.parse(raw);
+        for (const item of list) {
+          if (!spaces.has(item.id)) {
+            spaces.set(item.id, item);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load spaces manifest:', e);
+    }
+  };
 
   // Seed the 3 Developer Documentation Books (Free Tier includes up to 3 books)
   seedDeveloperBooks(storageRoot, spaces, gitEngine);
+  loadSpacesManifest();
+
+  // Helper to count only custom user spaces (system-protected platform docs do not count against quota)
+  const getUserSpaces = () => {
+    return Array.from(spaces.values()).filter((s) => !s.isSystemProtected);
+  };
 
   // Health check
   app.get('/api/health', async () => ({
@@ -276,9 +308,13 @@ export function buildServer() {
 
   // List all doc spaces / books (returns count and max allowed)
   app.get('/api/spaces', async () => {
+    const allSpaces = Array.from(spaces.values()).map(sanitizeSpace);
+    const userSpaces = allSpaces.filter((s) => !s.isSystemProtected);
     return {
-      spaces: Array.from(spaces.values()).map(sanitizeSpace),
-      count: spaces.size,
+      spaces: allSpaces,
+      count: userSpaces.length,
+      userBookCount: userSpaces.length,
+      totalCount: allSpaces.length,
       maxAllowed: 3,
       tier: 'FREE_COMMUNITY',
     };
@@ -286,11 +322,12 @@ export function buildServer() {
 
   // Create new space / book (Enforces Free Tier 3-book limit & supports password protection)
   app.post('/api/spaces', async (req, reply) => {
-    if (spaces.size >= 3) {
+    const userSpaces = getUserSpaces();
+    if (userSpaces.length >= 3) {
       return reply.status(403).send({
-        error: 'Free Tier limit reached. You can create up to 3 documentation books. Please delete an existing book to create a new one.',
+        error: 'Free Tier limit reached. You can create up to 3 custom documentation books. Please delete an existing custom book to create a new one.',
         limit: 3,
-        currentCount: spaces.size,
+        currentCount: userSpaces.length,
       });
     }
 
@@ -334,7 +371,7 @@ category: Getting Started
 ${description ? description.trim() + '\n\n' : ''}This is your new documentation book.
 
 > [!NOTE] Free Tier Book
-> You are using ${spaces.size + 1} of your 3 included books on the Docwyrm Free Tier.
+> You are using ${userSpaces.length + 1} of your 3 included custom books on the Docwyrm Free Tier.
 
 ## Next Steps
 
@@ -373,11 +410,13 @@ Use the sidebar on the left to add chapters, sections, and nested sub-pages.
     };
 
     spaces.set(spaceId, newSpace);
+    saveSpacesManifest();
 
     return {
       success: true,
       space: sanitizeSpace(newSpace),
-      count: spaces.size,
+      count: getUserSpaces().length,
+      userBookCount: getUserSpaces().length,
       maxAllowed: 3,
     };
   });
@@ -423,7 +462,7 @@ Use the sidebar on the left to add chapters, sections, and nested sub-pages.
       return reply.status(404).send({ error: 'Book not found' });
     }
     if (space.isSystemProtected) {
-      return reply.status(403).send({ error: 'Cannot delete the system-protected developer guide.' });
+      return reply.status(403).send({ error: 'Cannot delete the official platform developer guides.' });
     }
 
     spaces.delete(space.id);
@@ -436,10 +475,13 @@ Use the sidebar on the left to add chapters, sections, and nested sub-pages.
       console.error(e);
     }
 
+    saveSpacesManifest();
+
     return {
       success: true,
       deletedSpaceId: space.id,
-      count: spaces.size,
+      count: getUserSpaces().length,
+      userBookCount: getUserSpaces().length,
       maxAllowed: 3,
     };
   });
