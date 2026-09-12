@@ -1,0 +1,24 @@
+[
+  {
+    "id": "task-1",
+    "title": "Mobile responsive drawer for docs reading view",
+    "status": "pending",
+    "priority": "high",
+    "blockedBy": [],
+    "branch": "main",
+    "tags": [],
+    "createdAt": "2026-09-12T17:43:19.983Z",
+    "updatedAt": "2026-09-12T17:43:19.983Z"
+  },
+  {
+    "id": "task-2",
+    "title": "Search indexing for custom user books",
+    "status": "pending",
+    "priority": "medium",
+    "blockedBy": [],
+    "branch": "main",
+    "tags": [],
+    "createdAt": "2026-09-12T17:43:21.375Z",
+    "updatedAt": "2026-09-12T17:43:21.375Z"
+  }
+]

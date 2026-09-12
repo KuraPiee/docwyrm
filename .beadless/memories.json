@@ -1,0 +1,62 @@
+[
+  {
+    "id": "mem-mtyobiew-nabz",
+    "category": "context",
+    "title": "Production VDS Deployment",
+    "content": "Live on 45.94.169.102 via PM2 running docwyrm-api on 4000 and docwyrm-web on 3000 behind Nginx with SSL on docwyrm.com.",
+    "tags": [
+      "vds",
+      "deployment"
+    ],
+    "createdAt": "2026-09-12T17:43:15.704Z",
+    "updatedAt": "2026-09-12T17:43:15.704Z",
+    "author": "KuraPiee",
+    "commitHash": "31a1ff0c46c926f57ee651b0c377d54ca80be3bb",
+    "branch": "main"
+  },
+  {
+    "id": "mem-mtyobh8d-87gx",
+    "category": "lesson",
+    "title": "Theme leakage across pages",
+    "content": "Applying theme variables directly to document.documentElement affects all routes unless cleaned up on unmount.",
+    "tags": [
+      "theme",
+      "gotcha"
+    ],
+    "createdAt": "2026-09-12T17:43:14.173Z",
+    "updatedAt": "2026-09-12T17:43:14.173Z",
+    "author": "KuraPiee",
+    "commitHash": "31a1ff0c46c926f57ee651b0c377d54ca80be3bb",
+    "branch": "main"
+  },
+  {
+    "id": "mem-mtyobg2m-22h2",
+    "category": "decision",
+    "title": "Domain migration to docwyrm.com",
+    "content": "All occurrences of .dev replaced with docwyrm.com, author updated to KuraPiee.",
+    "tags": [
+      "domain",
+      "branding"
+    ],
+    "createdAt": "2026-09-12T17:43:12.670Z",
+    "updatedAt": "2026-09-12T17:43:12.670Z",
+    "author": "KuraPiee",
+    "commitHash": "31a1ff0c46c926f57ee651b0c377d54ca80be3bb",
+    "branch": "main"
+  },
+  {
+    "id": "mem-mtyobewo-0yyk",
+    "category": "decision",
+    "title": "Isolate main site theme with resetGlobalTheme",
+    "content": "When navigating away from docs/studio to landing, marketplace, or dashboard, resetGlobalTheme() strips custom CSS vars and sets data-theme to default.",
+    "tags": [
+      "theme",
+      "architecture"
+    ],
+    "createdAt": "2026-09-12T17:43:11.160Z",
+    "updatedAt": "2026-09-12T17:43:11.160Z",
+    "author": "KuraPiee",
+    "commitHash": "31a1ff0c46c926f57ee651b0c377d54ca80be3bb",
+    "branch": "main"
+  }
+]
