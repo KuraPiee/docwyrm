@@ -61,9 +61,23 @@ export function AuthModal({
     }, 400);
   };
 
-  const handleGitHubAuth = () => {
+  const handleGitHubAuth = async () => {
     setIsLoading(true);
-    setInfoMessage('GitHub doğrulanıyor, Sınırsız Free Tier hesabınız aktif ediliyor...');
+    setInfoMessage('GitHub oturumu başlatılıyor...');
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const statusRes = await fetch(`${apiUrl}/api/auth/github-status`).catch(() => null);
+      if (statusRes && statusRes.ok) {
+        const data = await statusRes.json();
+        if (data && data.configured) {
+          window.location.href = `${apiUrl}/api/auth/github`;
+          return;
+        }
+      }
+    } catch {
+      // Proceed with seamless instant auth
+    }
 
     setTimeout(() => {
       handleSuccessfulAuth({

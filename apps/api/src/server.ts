@@ -63,15 +63,24 @@ export function buildServer() {
 
   // --- AUTHENTICATION & GITHUB OAUTH ENDPOINTS ---
 
+  // Check GitHub OAuth configuration status
+  app.get('/api/auth/github-status', async () => {
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    return {
+      configured: Boolean(clientId && clientId !== 'your_github_client_id_here'),
+    };
+  });
+
   // Initiate GitHub OAuth with CSRF state protection
   app.get('/api/auth/github', async (req, reply) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
-    const callbackUrl = process.env.GITHUB_CALLBACK_URL || 'http://localhost:4000/api/auth/github/callback';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://docwyrm.com';
+    const callbackUrl = process.env.GITHUB_CALLBACK_URL || `${frontendUrl}/api/auth/github/callback`;
 
-    if (!clientId) {
+    if (!clientId || clientId === 'your_github_client_id_here') {
       return reply.send({
         configured: false,
-        message: 'GITHUB_CLIENT_ID not set in environment. Use demo mode or configure GitHub OAuth in .env',
+        message: 'GITHUB_CLIENT_ID not set. Please configure GitHub OAuth in .env for docwyrm.com',
         authUrl: null,
       });
     }
@@ -91,7 +100,7 @@ export function buildServer() {
     const { code, state } = req.query as { code?: string; state?: string };
     const clientId = process.env.GITHUB_CLIENT_ID;
     const clientSecret = process.env.GITHUB_CLIENT_SECRET;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://docwyrm.com';
 
     if (!state || !oauthStates.has(state)) {
       return reply.status(403).send({
@@ -131,8 +140,33 @@ export function buildServer() {
       });
       const userData = await userRes.json();
 
+      let email = userData.email;
+      if (!email) {
+        try {
+          const emailsRes = await fetch('https://api.github.com/user/emails', {
+            headers: {
+              Authorization: `Bearer ${tokenData.access_token}`,
+              'User-Agent': 'Docwyrm-Platform',
+            },
+          });
+          const emails = await emailsRes.json();
+          if (Array.isArray(emails)) {
+            const primary = emails.find((e: any) => e.primary) || emails[0];
+            if (primary) email = primary.email;
+          }
+        } catch {
+          // ignore email fetch failure
+        }
+      }
+
+      const userName = userData.login || userData.name || 'Docwyrm User';
+      const userAvatar = userData.avatar_url || `https://github.com/${userName}.png`;
+      const userEmail = email || `${userName.toLowerCase()}@users.noreply.github.com`;
+
       return reply.redirect(
-        `${frontendUrl}/docs?auth=success&user=${encodeURIComponent(userData.login || userData.name || 'user')}`
+        `${frontendUrl}/docs?auth=success&user=${encodeURIComponent(userName)}&avatar=${encodeURIComponent(
+          userAvatar
+        )}&email=${encodeURIComponent(userEmail)}`
       );
     } catch (err: any) {
       return reply.status(500).send({ error: 'GitHub OAuth exchange failed', message: err.message });

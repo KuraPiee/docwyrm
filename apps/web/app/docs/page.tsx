@@ -14,6 +14,7 @@ import { AnalyticsModal } from '@/components/AnalyticsModal';
 import { exportSingleDocAsMarkdown, printCleanDocument, exportFullBook } from '@/lib/export';
 import { Loader2, ArrowLeft, Plus, Book, X, AlertTriangle } from 'lucide-react';
 import { getActiveTheme, ThemeId, applyTheme } from '@/lib/theme';
+import { saveSession } from '@/lib/session';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 const DEFAULT_BOOK_ID = 'docwyrm-developer-guide';
@@ -48,6 +49,27 @@ export default function DocsPage() {
   const [newBookTitle, setNewBookTitle] = useState('');
   const [newBookError, setNewBookError] = useState<string | null>(null);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+
+  // Capture GitHub OAuth success redirect
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('auth') === 'success') {
+      const user = params.get('user') || 'Docwyrm User';
+      const avatar = params.get('avatar') || `https://github.com/${user}.png`;
+      const email = params.get('email') || `${user.toLowerCase()}@users.noreply.github.com`;
+      saveSession({
+        name: user,
+        email: email,
+        avatarUrl: avatar,
+        provider: 'github',
+        plan: 'free_unlimited',
+      });
+      // Clean query parameters from URL without reloading
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, []);
 
   // Sync dark class on <html>
   useEffect(() => {
